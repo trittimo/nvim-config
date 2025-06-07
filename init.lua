@@ -3,6 +3,7 @@ local sysname = vim.loop.os_uname().sysname
 require("misc")
 require("layout")
 require("commands")
+require("status")
 
 if uname == "Darwin" then
     require("keymaps.mac")
