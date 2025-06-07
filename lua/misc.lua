@@ -8,6 +8,7 @@ vim.opt.expandtab = true
 -- Show whitespace
 vim.cmd(":set list")
 vim.cmd(":set lcs+=space:·")
+vim.cmd(":set path+=**")
 
 -- :help vim.opt
 vim.cmd(":colorscheme slate")

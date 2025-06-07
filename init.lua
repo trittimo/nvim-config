@@ -2,11 +2,12 @@ local sysname = vim.loop.os_uname().sysname
 
 require("misc")
 require("layout")
+require("commands")
 
 if uname == "Darwin" then
-	require("keymaps.mac")
+    require("keymaps.mac")
 elseif uname == "Windows_NT" then
-	require("keymaps.windows")
+    require("keymaps.windows")
 end
 
 require("keymaps.shared")
