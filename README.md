@@ -1,6 +1,7 @@
 # NVIM Config
 ## Paths
 *Mac*: `~/.config/nvim`
-*Windwos*: `TODO`
+
+*Windows*: `TODO`
 
 
