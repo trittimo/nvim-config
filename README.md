@@ -5,6 +5,10 @@
 
 *Windows*: `TODO`
 
+### LSPs
+#### Mac
+*Lua* `brew install lua-language-server`
+
 ## Paths
 *Mac*: `~/.config/nvim`
 

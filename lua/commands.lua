@@ -1,4 +1,10 @@
-vim.api.nvim_create_user_command("PreviewMarkdown", function()
+-- Format the current buffer
+vim.api.nvim_create_user_command("Format", function()
+    vim.lsp.buf.format()
+end, {})
+
+-- Preview Markdown
+vim.api.nvim_create_user_command("Markdown", function()
     local file
 
     -- Check if current buffer is netrw

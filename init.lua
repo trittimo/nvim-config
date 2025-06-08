@@ -5,6 +5,9 @@ require("layout")
 require("commands")
 require("status")
 
+require("config.lazy")
+require("lazy").setup("plugins")
+
 if sysname == "Darwin" then
     require("keymaps.mac")
 elseif sysname == "Windows_NT" then
@@ -12,6 +15,3 @@ elseif sysname == "Windows_NT" then
 end
 
 require("keymaps.shared")
-require("config.lazy")
-require("lazy").setup("plugins")
-
