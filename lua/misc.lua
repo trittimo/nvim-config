@@ -12,7 +12,7 @@ vim.cmd(":set lcs+=space:·")
 vim.cmd(":set path+=**")
 
 -- :help vim.opt
-vim.cmd(":colorscheme slate")
+vim.cmd(":colorscheme habamax")
 vim.cmd(":set relativenumber")
 
 vim.o.tags = "./tags;,tags"
