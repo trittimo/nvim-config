@@ -25,18 +25,8 @@ return {
         "folke/which-key.nvim",
         event = "VeryLazy",
         opts = {
-            -- your configuration comes here
-            -- or leave it empty to use the default settings
-            -- refer to the configuration section below
         },
         keys = {
-            {
-                "<leader>?",
-                function()
-                    require("which-key").show({ global = false })
-                end,
-                desc = "Buffer Local Keymaps (which-key)",
-            },
         },
     },
     {
@@ -54,7 +44,10 @@ return {
         tag = '0.1.8',
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
-            { "<leader>f", "<cmd>:Telescope find_files<cr>", desc = "Telescope Find Files" }
+            { "<leader>f", "<cmd>:Telescope find_files<cr>", desc = "Telescope Find Files" },
+            { "<C-S-f>", "<cmd>:Telescope live_grep<cr>", desc = "Telescope grep all files" },
+            { "<leader>?", "<cmd>:Telescope keymaps<cr>", desc = "Telescope keymaps" },
+            { "<C-S-p>", "<cmd>:Telescope commands<cr>", desc = "Telescope commands" }
         }
     },
     {
@@ -71,5 +64,12 @@ return {
             })
             telescope.load_extension("file_browser")
         end
+    },
+    {
+        "AckslD/muren.nvim",
+        config = true,
+        keys = {
+            { "<C-S-r>", "<cmd>:MurenToggle<cr>", desc = "Open Muren (regex replace)" }
+        }
     }
 }
