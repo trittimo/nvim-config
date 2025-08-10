@@ -16,9 +16,10 @@ return {
     {
         "neovim/nvim-lspconfig",
         config = function()
-            require("lspconfig")
-                .lua_ls
-                .setup({})
+            local lspconfig = require("lspconfig")
+            lspconfig.lua_ls.setup({})
+            lspconfig.rust_analyzer.setup({})
+            lspconfig.ts_ls.setup({})
         end
     },
     {
@@ -41,7 +42,6 @@ return {
     },
     {
         'nvim-telescope/telescope.nvim',
-        tag = '0.1.8',
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
             { "<leader>f", "<cmd>:Telescope find_files<cr>", desc = "Telescope Find Files" },
