@@ -125,6 +125,14 @@ return {
                     local cmp = require("cmp")
                     cmp.mapping.complete()
                 end
+            },
+            {
+                "<C-Space>",
+                mode = "n",
+                function()
+                    local cmp = require("cmp")
+                    cmp.mapping.complete()
+                end
             }
         }
     },
