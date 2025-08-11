@@ -20,7 +20,17 @@ return {
             local cmp_nvim_lsp = require("cmp_nvim_lsp")
             local capabilities = cmp_nvim_lsp.default_capabilities()
             lspconfig.lua_ls.setup({
-                capabilities = capabilities
+                capabilities = capabilities,
+                settings = {
+                    Lua = {
+                        diagnostics = {
+                            globals = { "vim" },
+                        }
+                    },
+                    workspace = {
+                        library = vim.api.nvim_get_runtime_file("", true)
+                    }
+                }
             })
             lspconfig.rust_analyzer.setup({
                 capabilities = capabilities
@@ -53,9 +63,9 @@ return {
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
             { "<leader>f", "<cmd>:Telescope find_files<cr>", desc = "Telescope Find Files" },
-            { "<C-S-f>", "<cmd>:Telescope live_grep<cr>", desc = "Telescope grep all files" },
-            { "<leader>?", "<cmd>:Telescope keymaps<cr>", desc = "Telescope keymaps" },
-            { "<C-S-p>", "<cmd>:Telescope commands<cr>", desc = "Telescope commands" }
+            { "<C-S-f>",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
+            { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },
+            { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" }
         }
     },
     {
@@ -88,9 +98,16 @@ return {
                 snippet = { expand = function(_) end }, -- Disable snippet suggestion for now - can figure this out later
                 mapping = cmp.mapping.preset.insert({
                     ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<CR>"] = cmp.mapping.confirm({select = true}),
+                    ["<CR>"] = cmp.mapping.confirm({ select = true }),
                     ["<Tab>"] = cmp.mapping.select_next_item(),
-                    ["<S-Tab>"] = cmp.mapping.select_prev_item()
+                    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+                    ["<Esc>"] = cmp.mapping(function(fallback)
+                        if cmp.visible() then
+                            cmp.abort()
+                        else
+                            fallback()
+                        end
+                    end, { 'i', 'c' })
                 }),
                 sources = {
                     { name = "nvim_lsp" },
@@ -101,7 +118,9 @@ return {
             }
         end,
         keys = {
-            { "<C-Space>", mode = "i",
+            {
+                "<C-Space>",
+                mode = "i",
                 function()
                     local cmp = require("cmp")
                     cmp.mapping.complete()
@@ -123,5 +142,11 @@ return {
     },
     {
         "hrsh7th/nvim-lspconfig",
+    },
+    {
+        "meznaric/key-analyzer.nvim",
+        opts = {
+            command_name = "KeyAnalyzer"
+        }
     }
 }
