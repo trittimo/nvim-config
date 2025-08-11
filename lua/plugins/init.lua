@@ -17,9 +17,17 @@ return {
         "neovim/nvim-lspconfig",
         config = function()
             local lspconfig = require("lspconfig")
-            lspconfig.lua_ls.setup({})
-            lspconfig.rust_analyzer.setup({})
-            lspconfig.ts_ls.setup({})
+            local cmp_nvim_lsp = require("cmp_nvim_lsp")
+            local capabilities = cmp_nvim_lsp.default_capabilities()
+            lspconfig.lua_ls.setup({
+                capabilities = capabilities
+            })
+            lspconfig.rust_analyzer.setup({
+                capabilities = capabilities
+            })
+            lspconfig.ts_ls.setup({
+                capabilities = capabilities
+            })
         end
     },
     {
@@ -71,5 +79,49 @@ return {
         keys = {
             { "<C-S-r>", "<cmd>:MurenToggle<cr>", desc = "Open Muren (regex replace)" }
         }
+    },
+    {
+        "hrsh7th/nvim-cmp",
+        opts = function()
+            local cmp = require("cmp")
+            return {
+                snippet = { expand = function(_) end }, -- Disable snippet suggestion for now - can figure this out later
+                mapping = cmp.mapping.preset.insert({
+                    ["<C-Space>"] = cmp.mapping.complete(),
+                    ["<CR>"] = cmp.mapping.confirm({select = true}),
+                    ["<Tab>"] = cmp.mapping.select_next_item(),
+                    ["<S-Tab>"] = cmp.mapping.select_prev_item()
+                }),
+                sources = {
+                    { name = "nvim_lsp" },
+                    { name = "buffer" },
+                    { name = "path" },
+                    { name = "cmdline" }
+                }
+            }
+        end,
+        keys = {
+            { "<C-Space>", mode = "i",
+                function()
+                    local cmp = require("cmp")
+                    cmp.mapping.complete()
+                end
+            }
+        }
+    },
+    {
+        "hrsh7th/cmp-nvim-lsp",
+    },
+    {
+        "hrsh7th/cmp-buffer",
+    },
+    {
+        "hrsh7th/cmp-path",
+    },
+    {
+        "hrsh7th/cmp-cmdline",
+    },
+    {
+        "hrsh7th/nvim-lspconfig",
     }
 }
