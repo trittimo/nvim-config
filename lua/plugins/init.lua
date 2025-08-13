@@ -1,5 +1,23 @@
 return {
     {
+		"wincent/base16-nvim",
+		lazy = false, -- load at start
+		priority = 1000, -- load first
+		config = function()
+			vim.cmd([[colorscheme chalkboard]])
+			vim.o.background = 'dark'
+			vim.cmd([[hi Normal ctermbg=NONE]])
+			-- Less visible window separator
+			vim.api.nvim_set_hl(0, "WinSeparator", { fg = 1250067 })
+			-- Make comments more prominent -- they are important.
+			local bools = vim.api.nvim_get_hl(0, { name = 'Boolean' })
+			vim.api.nvim_set_hl(0, 'Comment', bools)
+			-- Make it clearly visible which argument we're at.
+			local marked = vim.api.nvim_get_hl(0, { name = 'PMenu' })
+			vim.api.nvim_set_hl(0, 'LspSignatureActiveParameter', { fg = marked.fg, bg = marked.bg, ctermfg = marked.ctermfg, ctermbg = marked.ctermbg, bold = true })
+		end
+	},
+    {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         config = function()
@@ -16,27 +34,83 @@ return {
     {
         "neovim/nvim-lspconfig",
         config = function()
-            local lspconfig = require("lspconfig")
-            local cmp_nvim_lsp = require("cmp_nvim_lsp")
-            local capabilities = cmp_nvim_lsp.default_capabilities()
-            lspconfig.lua_ls.setup({
-                capabilities = capabilities,
+            -- Stole most of this from https://github.com/jonhoo/configs/blob/master/editor/.config/nvim/init.lua
+            vim.lsp.config('rust_analyzer', {
+                -- Server-specific settings. See `:help lspconfig-setup`
                 settings = {
-                    Lua = {
-                        diagnostics = {
-                            globals = { "vim" },
-                        }
+                    ["rust-analyzer"] = {
+                        cargo = {
+                            features = "all",
+                        },
+                        checkOnSave = {
+                            enable = true,
+                        },
+                        -- imports = {
+                        --     group = {
+                        --         enable = false,
+                        --     },
+                        -- },
+                        -- completion = {
+                        --     postfix = {
+                        --         enable = false,
+                        --     },
+                        -- },
                     },
-                    workspace = {
-                        library = vim.api.nvim_get_runtime_file("", true)
-                    }
-                }
+                },
             })
-            lspconfig.rust_analyzer.setup({
-                capabilities = capabilities
-            })
-            lspconfig.ts_ls.setup({
-                capabilities = capabilities
+            vim.lsp.enable('rust_analyzer')
+
+            -- Global mappings.
+            -- See `:help vim.diagnostic.*` for documentation on any of the below functions
+            vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
+            vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
+            vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
+            vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist)
+
+            -- Use LspAttach autocommand to only map the following keys
+            -- after the language server attaches to the current buffer
+            vim.api.nvim_create_autocmd('LspAttach', {
+                group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+                callback = function(ev)
+                    -- Buffer local mappings.
+                    -- See `:help vim.lsp.*` for documentation on any of the below functions
+                    local opts = { buffer = ev.buf }
+                    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+                    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+                    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+                    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+                    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+                    vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+                    vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+                    vim.keymap.set('n', '<leader>wl', function()
+                        print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+                    end, opts)
+                    vim.keymap.set('n', '<F2>', vim.lsp.buf.rename, opts)
+                    vim.keymap.set({'n','v','i'}, '<C-,>', vim.lsp.buf.code_action, opts)
+                    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+
+                    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+
+                    -- TODO: find some way to make this only apply to the current line.
+                    -- if client.server_capabilities.inlayHintProvider then
+                    --     vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+                    -- end
+
+                    -- None of this semantics tokens business.
+                    -- https://www.reddit.com/r/neovim/comments/143efmd/is_it_possible_to_disable_treesitter_completely/
+                    client.server_capabilities.semanticTokensProvider = nil
+
+                    -- format on save for Rust
+                    -- if client.server_capabilities.documentFormattingProvider then
+                    --     vim.api.nvim_create_autocmd("BufWritePre", {
+                    --         group = vim.api.nvim_create_augroup("RustFormat", { clear = true }),
+                    --         buffer = bufnr,
+                    --         callback = function()
+                    --             vim.lsp.buf.format({ bufnr = bufnr })
+                    --         end,
+                    --     })
+                    -- end
+                end,
             })
         end
     },
@@ -92,62 +166,38 @@ return {
     },
     {
         "hrsh7th/nvim-cmp",
+        dependencies = {
+            "neovim/nvim-lspconfig",
+            "hrsh7th/cmp-nvim-lsp",
+            "hrsh7th/cmp-buffer",
+            "hrsh7th/cmp-path",
+        },
         opts = function()
             local cmp = require("cmp")
             return {
-                snippet = { expand = function(_) end }, -- Disable snippet suggestion for now - can figure this out later
+                snippet = {
+                    expand = function(args)
+                        vim.snippet.expand(args.body)
+                    end
+                },
                 mapping = cmp.mapping.preset.insert({
-                    ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<CR>"] = cmp.mapping.confirm({ select = true }),
-                    ["<Tab>"] = cmp.mapping.select_next_item(),
-                    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
-                    ["<Esc>"] = cmp.mapping(function(fallback)
-                        if cmp.visible() then
-                            cmp.abort()
-                        else
-                            fallback()
-                        end
-                    end, { 'i', 'c' })
+                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    ['<C-Space>'] = cmp.mapping.complete(),
+                    ['<C-e>'] = cmp.mapping.abort(),
+                    -- Accept currently selected item.
+                    -- Set `select` to `false` to only confirm explicitly selected items.
+                    ['<CR>'] = cmp.mapping.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert }),
                 }),
+                experimental = {
+                    ghost_text = true,
+                },
                 sources = {
                     { name = "nvim_lsp" },
                     { name = "path" }
-                }
+                },
             }
-        end,
-        keys = {
-            {
-                "<C-Space>",
-                mode = "i",
-                function()
-                    local cmp = require("cmp")
-                    cmp.mapping.complete()
-                end
-            },
-            {
-                "<C-Space>",
-                mode = "n",
-                function()
-                    local cmp = require("cmp")
-                    cmp.mapping.complete()
-                end
-            }
-        }
-    },
-    {
-        "hrsh7th/cmp-nvim-lsp",
-    },
-    {
-        "hrsh7th/cmp-buffer",
-    },
-    {
-        "hrsh7th/cmp-path",
-    },
-    {
-        "hrsh7th/cmp-cmdline",
-    },
-    {
-        "hrsh7th/nvim-lspconfig",
+        end
     },
     {
         "shrynx/line-numbers.nvim",
