@@ -111,9 +111,7 @@ return {
                 }),
                 sources = {
                     { name = "nvim_lsp" },
-                    { name = "buffer" },
-                    { name = "path" },
-                    { name = "cmdline" }
+                    { name = "path" }
                 }
             }
         end,
@@ -152,9 +150,7 @@ return {
         "hrsh7th/nvim-lspconfig",
     },
     {
-        "meznaric/key-analyzer.nvim",
-        opts = {
-            command_name = "KeyAnalyzer"
-        }
+        "shrynx/line-numbers.nvim",
+        opts = {},
     }
 }

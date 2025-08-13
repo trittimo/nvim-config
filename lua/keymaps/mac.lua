@@ -6,6 +6,8 @@ if vim.g.neovide then
     vim.keymap.set("t", '<D-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
 end
 
+vim.keymap.set({"i", "n"}, "<D-/>", "gcc", { remap = true, silent = true})
+vim.keymap.set("v", "<D-/>", "gc", { remap = true, silent = true})
 vim.keymap.set("i", "<D-Left>", "<Esc>bi")
 vim.keymap.set("i", "<D-Right>", "<Esc>wi")
 vim.keymap.set("n", "<D-Left>", "b")

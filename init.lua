@@ -2,6 +2,7 @@ local sysname = vim.loop.os_uname().sysname
 require("misc")
 
 if not vim.g.vscode then
+    require("whitespace")
     require("config.lazy")
     require("lazy").setup("plugins")
     require("layout")
