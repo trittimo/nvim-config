@@ -6,10 +6,11 @@ if not vim.g.vscode then
     require("config.lazy")
     require("lazy").setup("plugins")
     require("layout")
-    require("commands")
     require("status")
     require("keymaps.shared")
 end
+
+require("commands")
 
 if sysname == "Darwin" then
     require("keymaps.mac")

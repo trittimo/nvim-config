@@ -16,6 +16,10 @@ vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
 
+-- Permanent undo file
+-- This file only fills to the undo buffer limit, which is good
+vim.opt.undofile = true
+
 -- :help vim.opt
 vim.cmd(":colorscheme habamax")
 vim.cmd(":set relativenumber")
