@@ -1,7 +1,7 @@
 if vim.g.neovide then
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
-    vim.keymap.set('n', '<D-v>', '"+gp') -- Paste normal mode
-    vim.keymap.set('c', '<D-v>', '<C-R>+') -- Paste command mode
+    vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
+    vim.keymap.set('c', '<D-v>', '<C-R>"+p') -- Paste command mode
     vim.keymap.set('i', '<D-v>', '<Esc>"+gpa') -- Paste insert mode
     vim.keymap.set("t", '<D-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
 end

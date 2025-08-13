@@ -1,5 +1,7 @@
 -- Spacebar is our leader key
 vim.g.mapleader = " "
+vim.opt.autoindent = true
+vim.opt.smartindent = true
 
 -- Use 4 spaces for tab
 vim.opt.tabstop = 4
