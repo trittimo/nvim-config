@@ -15,10 +15,16 @@ vim.keymap.set({"i"}, "kj", "<esc>")
 vim.keymap.set({"n"}, "<C-.>", "<cmd>:lua vim.diagnostic.open_float()<CR>")
 
 -- Resize current window
-vim.keymap.set({"n"}, "<C-S-h>", ":vertical resize -2<CR>")
-vim.keymap.set({"n"}, "<C-S-l>", ":vertical resize +2<CR>")
-vim.keymap.set({"n"}, "<C-S-j>", ":resize +2<CR>")
-vim.keymap.set({"n"}, "<C-S-k>", ":resize -2<CR>")
+vim.keymap.set({"n"}, "<C-S-h>", "<cmd>:vertical resize -2<CR>")
+vim.keymap.set({"n"}, "<C-S-l>", "<cmd>:vertical resize +2<CR>")
+vim.keymap.set({"n"}, "<C-S-j>", "<cmd>:resize +2<CR>")
+vim.keymap.set({"n"}, "<C-S-k>", "<cmd>:resize -2<CR>")
 
 -- LSP configs
 vim.keymap.set({"n", "i"}, "<F2>", vim.lsp.buf.rename, { noremap = true, silent = true })
+
+-- Split screen vertically and focus on the new screen
+vim.keymap.set({"n"}, "<C-\\>", "<cmd>:vsplit<CR><C-w>l")
+
+-- Split screen horizontally and focus on the new screen
+vim.keymap.set({"n"}, "<C-|>", "<cmd>:split<CR><C-w>j")

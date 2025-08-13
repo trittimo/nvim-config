@@ -13,9 +13,14 @@ end
 require("commands")
 
 if sysname == "Darwin" then
+    require("layout.font")
     require("keymaps.mac")
 elseif sysname == "Windows_NT" then
+    require("layout.windows")
     require("keymaps.windows")
+elseif sysname == "Linux" then
+    require("layout.linux")
+    require("keymaps.linux")
 end
 
 if vim.g.neovide then require("neovide") end

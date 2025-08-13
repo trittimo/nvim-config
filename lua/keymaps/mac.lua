@@ -7,25 +7,17 @@ if vim.g.neovide then
 
     -- Increase font size
     vim.keymap.set('n', '<D-=>', function()
-        local current_font = vim.o.guifont
-        local _, _, size = current_font:find(':h(%d+)')
-        size = tonumber(size) or 20
-        vim.o.guifont = current_font:gsub(':h%d+', '') .. ':h' .. (size + 1)
+        vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
     end, { silent = true })
 
     -- Decrease font size
     vim.keymap.set('n', '<D-->', function()
-        local current_font = vim.o.guifont
-        local _, _, size = current_font:find(':h(%d+)')
-        size = tonumber(size) or 20
-        if size > 6 then  -- Prevent font from getting too small
-            vim.o.guifont = current_font:gsub(':h%d+', '') .. ':h' .. (size - 1)
-        end
+        vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1 / 1.1
     end, { silent = true })
 
     -- Reset font size
     vim.keymap.set('n', '<D-0>', function()
-        vim.o.guifont = 'Menlo:h20'
+        vim.g.neovide_scale_factor = 1
     end, { silent = true })
 end
 
