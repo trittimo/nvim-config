@@ -28,3 +28,5 @@ vim.keymap.set({"n"}, "<C-\\>", "<cmd>:vsplit<CR><C-w>l")
 
 -- Split screen horizontally and focus on the new screen
 vim.keymap.set({"n"}, "<C-|>", "<cmd>:split<CR><C-w>j")
+
+vim.keymap.set({"n"}, "\\", "<cmd>:noh<CR>")
