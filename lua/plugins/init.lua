@@ -1,31 +1,12 @@
 return {
     {
-		"wincent/base16-nvim",
+		"tinted-theming/tinted-vim",
 		lazy = false, -- load at start
 		priority = 1000, -- load first
 		config = function()
-			vim.cmd([[colorscheme espresso]])
-			-- vim.o.background = 'dark'
-			vim.cmd([[hi Normal ctermbg=NONE]])
-			-- Less visible window separator
-			vim.api.nvim_set_hl(0, "WinSeparator", { fg = 1250067 })
-			-- Make comments more prominent -- they are important.
-			local bools = vim.api.nvim_get_hl(0, { name = 'Boolean' })
-			vim.api.nvim_set_hl(0, 'Comment', bools)
-			-- Make it clearly visible which argument we're at.
-			local marked = vim.api.nvim_get_hl(0, { name = 'PMenu' })
-			vim.api.nvim_set_hl(0, 'LspSignatureActiveParameter', { fg = marked.fg, bg = marked.bg, ctermfg = marked.ctermfg, ctermbg = marked.ctermbg, bold = true })
-            -- vim.api.nvim_set_hl(0, 'Identifier', { fg = "#5b97bf", bold = true })
+			vim.cmd.colorscheme("base16-material-darker")
 		end
 	},
-    {
-        "gdar463/color-picker.nvim",
-        commit = "49cb663ce83425bfd815f2efecf342814e8bcc5e",
-        opts = {},
-        keys = {
-            { "#", "<cmd>:PickColor<cr>", {"n"}, desc = "Pick a color" }
-        }
-    },
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
