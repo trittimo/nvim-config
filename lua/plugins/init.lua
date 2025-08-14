@@ -4,8 +4,8 @@ return {
 		lazy = false, -- load at start
 		priority = 1000, -- load first
 		config = function()
-			vim.cmd([[colorscheme chalkboard]])
-			vim.o.background = 'dark'
+			vim.cmd([[colorscheme espresso]])
+			-- vim.o.background = 'dark'
 			vim.cmd([[hi Normal ctermbg=NONE]])
 			-- Less visible window separator
 			vim.api.nvim_set_hl(0, "WinSeparator", { fg = 1250067 })
@@ -15,7 +15,7 @@ return {
 			-- Make it clearly visible which argument we're at.
 			local marked = vim.api.nvim_get_hl(0, { name = 'PMenu' })
 			vim.api.nvim_set_hl(0, 'LspSignatureActiveParameter', { fg = marked.fg, bg = marked.bg, ctermfg = marked.ctermfg, ctermbg = marked.ctermbg, bold = true })
-            vim.api.nvim_set_hl(0, 'Identifier', { fg = "#5b97bf", bold = true })
+            -- vim.api.nvim_set_hl(0, 'Identifier', { fg = "#5b97bf", bold = true })
 		end
 	},
     {
