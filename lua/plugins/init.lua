@@ -4,6 +4,9 @@ return {
 		lazy = false, -- load at start
 		priority = 1000, -- load first
 		config = function()
+            -- Opacity seemed like a cool idea but it's mostly distracting
+            -- vim.g.neovide_opacity = 0.95
+            -- vim.g.neovide_normal_opacity = 0.95
 			vim.cmd.colorscheme("base16-material-darker")
 		end
 	},
