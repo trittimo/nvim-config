@@ -150,7 +150,11 @@ return {
             telescope.setup({
                 extensions = {
                     file_browser = {
-                        hijack_netrw = true
+                        hijack_netrw = true,
+                        depth = false,
+                        respect_gitignore = true,
+                        grouped = true,
+                        hide_parent_dir = true
                     }
                 }
             })
