@@ -15,8 +15,17 @@ return {
 			-- Make it clearly visible which argument we're at.
 			local marked = vim.api.nvim_get_hl(0, { name = 'PMenu' })
 			vim.api.nvim_set_hl(0, 'LspSignatureActiveParameter', { fg = marked.fg, bg = marked.bg, ctermfg = marked.ctermfg, ctermbg = marked.ctermbg, bold = true })
+            vim.api.nvim_set_hl(0, 'Identifier', { fg = "#5b97bf", bold = true })
 		end
 	},
+    {
+        "gdar463/color-picker.nvim",
+        commit = "49cb663ce83425bfd815f2efecf342814e8bcc5e",
+        opts = {},
+        keys = {
+            { "#", "<cmd>:PickColor<cr>", {"n"}, desc = "Pick a color" }
+        }
+    },
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",

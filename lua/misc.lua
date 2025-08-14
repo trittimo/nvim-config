@@ -21,7 +21,6 @@ vim.opt.expandtab = true
 vim.opt.undofile = true
 
 -- :help vim.opt
-vim.cmd(":colorscheme habamax")
 vim.cmd(":set relativenumber")
 
 vim.o.tags = "./tags;,tags"
