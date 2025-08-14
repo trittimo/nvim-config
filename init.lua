@@ -13,7 +13,6 @@ end
 require("commands")
 
 if sysname == "Darwin" then
-    require("layout.font")
     require("keymaps.mac")
 elseif sysname == "Windows_NT" then
     require("layout.windows")
