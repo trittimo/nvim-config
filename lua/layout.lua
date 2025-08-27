@@ -4,3 +4,6 @@ vim.g.netrw_browse_split = 4
 vim.g.netrw_altv = 1
 vim.g.netrw_winsize = 25
 vim.cmd([[set nowrap]])
+if not vim.g.neovide then
+    vim.cmd([[colorscheme habamax]])
+end

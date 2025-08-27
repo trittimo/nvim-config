@@ -8,7 +8,10 @@ return {
             -- vim.g.neovide_opacity = 0.95
             -- vim.g.neovide_normal_opacity = 0.95
 			vim.cmd.colorscheme("base16-material-darker")
-		end
+		end,
+        enabled = function()
+            return vim.g.neovide
+        end
 	},
     {
         "nvim-treesitter/nvim-treesitter",
