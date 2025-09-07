@@ -129,8 +129,8 @@ return {
         'nvim-telescope/telescope.nvim',
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
-            { "<leader>f", "<cmd>:Telescope find_files<cr>", desc = "Telescope Find Files" },
-            { "<C-S-f>",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
+            { "<leader>o", "<cmd>:Telescope file_browser<cr>", desc = "Telescope Find Files" },
+            { "<leader>f",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
             { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },
             { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" }
         }

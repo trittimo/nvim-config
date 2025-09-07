@@ -29,4 +29,9 @@ vim.keymap.set({"n"}, "<C-\\>", "<cmd>:vsplit<CR><C-w>l")
 -- Split screen horizontally and focus on the new screen
 vim.keymap.set({"n"}, "<C-|>", "<cmd>:split<CR><C-w>j")
 
+-- Clear highlights
 vim.keymap.set({"n"}, "\\", "<cmd>:noh<CR>")
+
+-- Pageup/Pagedown
+vim.keymap.set({"v", "i", "n"}, "<C-j>", "<C-d>")
+vim.keymap.set({"v", "i", "n"}, "<C-k>", "<C-u>")
