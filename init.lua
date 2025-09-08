@@ -1,26 +1,278 @@
 local sysname = vim.loop.os_uname().sysname
-require("misc")
 
-if not vim.g.vscode then
-    require("whitespace")
-    require("config.lazy")
-    require("lazy").setup("plugins")
-    require("layout")
-    require("status")
-    require("keymaps.shared")
+-- ============= PLUGINS =============
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
+end
+vim.opt.rtp:prepend(lazypath)
+
+require("lazy").setup("plugins")
+
+-- ============= MISC =============
+-- Spacebar is our leader key
+vim.g.mapleader = " "
+
+-- Go to the correct indent level automatically
+vim.opt.autoindent = true
+vim.opt.smartindent = true
+
+-- Use ripgrep for searching
+if vim.fn.executable("rg") == 1 then
+    vim.opt.grepprg = "rg --no-heading --vimgrep"
+    vim.opt.grepformat = "%f:%l:%c:%m"
 end
 
-require("commands")
+-- Use 4 spaces for tab
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+
+-- Permanent undo file
+-- This file only fills to the undo buffer limit, which is good
+vim.opt.undofile = true
+
+-- :help vim.opt
+vim.cmd(":set relativenumber")
+
+vim.o.tags = "./tags;,tags"
+
+-- ============= WHITESPACE =============
+vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
+
+local function update_whitespace_highlight()
+    vim.cmd([[match ExtraWhitespace /\s\+$/]])
+end
+
+local function remove_whitespace_highlight()
+    vim.cmd([[call clearmatches()]])
+end
+
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "InsertLeave" }, {
+  pattern = "*",
+  callback = update_whitespace_highlight,
+})
+
+vim.api.nvim_create_autocmd({ "InsertEnter", "BufWinLeave" }, {
+    pattern = "*",
+    callback = remove_whitespace_highlight,
+})
+
+-- ============= LAYOUT =============
+vim.g.netrw_banner = 0
+vim.g.netrw_liststyle = 3
+vim.g.netrw_browse_split = 4
+vim.g.netrw_altv = 1
+vim.g.netrw_winsize = 25
+vim.cmd([[set nowrap]])
+if not vim.g.neovide then
+    vim.cmd([[colorscheme habamax]])
+end
+
+-- Status
+vim.o.laststatus = 2
+vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
+
+
+-- ============= KEYBINDS (All Systems) =============
+-- Exit to normal mode
+vim.keymap.set({"i"}, "kj", "<esc>")
+
+-- Show diagnostic under cursor
+vim.keymap.set({"n"}, "<C-.>", "<cmd>:lua vim.diagnostic.open_float()<CR>")
+
+-- Resize current window
+vim.keymap.set({"n"}, "<C-S-h>", "<cmd>:vertical resize -2<CR>")
+vim.keymap.set({"n"}, "<C-S-l>", "<cmd>:vertical resize +2<CR>")
+vim.keymap.set({"n"}, "<C-S-j>", "<cmd>:resize +2<CR>")
+vim.keymap.set({"n"}, "<C-S-k>", "<cmd>:resize -2<CR>")
+
+-- LSP configs
+vim.keymap.set({"n", "i"}, "<F2>", vim.lsp.buf.rename, { noremap = true, silent = true })
+
+-- Split screen vertically and focus on the new screen
+vim.keymap.set({"n"}, "<C-\\>", "<cmd>:vsplit<CR><C-w>l")
+
+-- Split screen horizontally and focus on the new screen
+vim.keymap.set({"n"}, "<C-|>", "<cmd>:split<CR><C-w>j")
+
+-- Clear highlights
+vim.keymap.set({"n"}, "\\", "<cmd>:noh<CR>")
+
+-- Pageup/Pagedown
+vim.keymap.set({"v", "i", "n"}, "<C-j>", "<C-d>")
+vim.keymap.set({"v", "i", "n"}, "<C-k>", "<C-u>")
 
 if sysname == "Darwin" then
-    require("keymaps.mac")
+    if vim.g.neovide then
+        vim.keymap.set('v', '<D-c>', '"+y') -- Copy
+        vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
+        vim.keymap.set('c', '<D-v>', '<C-R>"+p') -- Paste command mode
+        vim.keymap.set('i', '<D-v>', '<Esc>"+gpa') -- Paste insert mode
+        vim.keymap.set("t", '<D-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
+
+        -- Increase font size
+        vim.keymap.set('n', '<D-=>', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
+        end, { silent = true })
+
+        -- Decrease font size
+        vim.keymap.set('n', '<D-->', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1 / 1.1
+        end, { silent = true })
+
+        -- Reset font size
+        vim.keymap.set('n', '<D-0>', function()
+            vim.g.neovide_scale_factor = 1
+        end, { silent = true })
+    end
+
+    vim.keymap.set({"i", "n"}, "<D-/>", "gcc", { remap = true, silent = true})
+    vim.keymap.set("v", "<D-/>", "gc", { remap = true, silent = true})
+    vim.keymap.set("i", "<D-Left>", "<Esc>bi")
+    vim.keymap.set("i", "<D-Right>", "<Esc>wi")
+    vim.keymap.set("n", "<D-Left>", "b")
+    vim.keymap.set("n", "<D-Right>", "w")
+    vim.keymap.set("n", "<D-a>", "gg^<S-V><S-G>")
+    vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
 elseif sysname == "Windows_NT" then
-    require("layout.windows")
-    require("keymaps.windows")
+    if vim.g.neovide then
+        vim.keymap.set('v', '<C-S-c>', '"+y') -- Copy
+        vim.keymap.set('n', '<C-S-v>', '"+gpv`[=`]') -- Paste normal mode
+        vim.keymap.set('c', '<C-S-v>', '<C-R>"+p') -- Paste command mode
+        vim.keymap.set('i', '<C-S-v>', '<esc>"+gpa') -- Paste insert mode
+        vim.keymap.set("t", '<C-S-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
+
+        -- Increase font size
+        vim.keymap.set('n', '<C-=>', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
+        end, { silent = true })
+
+        -- Decrease font size
+        vim.keymap.set('n', '<C-->', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1 / 1.1
+        end, { silent = true })
+
+        -- Reset font size
+        vim.keymap.set('n', '<C-0>', function()
+            vim.g.neovide_scale_factor = 1
+        end, { silent = true })
+    end
+
+    vim.keymap.set({"i", "n"}, "<C-/>", "gcc", { remap = true, silent = true})
+    vim.keymap.set("v", "<C-/>", "gc", { remap = true, silent = true})
 elseif sysname == "Linux" then
-    require("layout.linux")
-    require("keymaps.linux")
+    if vim.g.neovide then
+        vim.keymap.set('v', '<C-S-c>', '"+y') -- Copy
+        vim.keymap.set('n', '<C-S-v>', '"+gpv`[=`]') -- Paste normal mode
+        vim.keymap.set('c', '<C-S-v>', '<C-R>"+p') -- Paste command mode
+        vim.keymap.set('i', '<C-S-v>', '<Esc>"+gpa') -- Paste insert mode
+        vim.keymap.set("t", '<C-S-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
+
+        -- Increase font size
+        vim.keymap.set('n', '<C-=>', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
+        end, { silent = true })
+
+        -- Decrease font size
+        vim.keymap.set('n', '<C-->', function()
+            vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1 / 1.1
+        end, { silent = true })
+
+        -- Reset font size
+        vim.keymap.set('n', '<C-0>', function()
+            vim.g.neovide_scale_factor = 1
+        end, { silent = true })
+    end
+
+    vim.keymap.set({"i", "n"}, "<C-/>", "gcc", { remap = true, silent = true})
+    vim.keymap.set("v", "<C-/>", "gc", { remap = true, silent = true})
 end
 
-if vim.g.neovide then require("neovide") end
-if vim.g.vscode then require("vscodium") end
+-- ============= COMMANDS =============
+-- Format the current buffer
+vim.api.nvim_create_user_command("Format", function()
+    vim.lsp.buf.format { async = true }
+end, {})
+
+-- Preview Markdown
+vim.api.nvim_create_user_command("Markdown", function()
+    local file
+
+    -- Check if current buffer is netrw
+    if vim.bo.filetype == "netrw" then
+        -- Get filename under cursor in netrw
+        -- netrw shows file names in the buffer, so grab the line text
+        local line = vim.api.nvim_get_current_line()
+        -- Construct full path: netrw’s directory + filename under cursor
+        local dir = vim.fn.expand("%:p:h") -- netrw directory path
+        file = vim.fn.fnamemodify(dir .. "/" .. line, ":p") -- full path
+
+    else
+        -- Normal buffer: current file path
+        file = vim.fn.expand("%:p")
+    end
+
+    -- Safety check: make sure file exists
+    if vim.fn.empty(file) == 1 or vim.fn.filereadable(file) == 0 then
+        vim.notify("No valid file to preview!", vim.log.levels.ERROR)
+        return
+    end
+
+    vim.cmd("vsplit") -- vertical split
+    vim.cmd("wincmd l") -- move to right split
+    vim.cmd("terminal glow " .. vim.fn.fnameescape(file)) -- open terminal running glow
+end, {})
+
+vim.api.nvim_create_user_command("Rotate", function()
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    if #wins ~= 2 then
+        print("Rotate: Only works with exactly two splits.")
+        return
+    end
+
+    -- Get current window layout direction
+    local win1 = wins[1]
+    local win2 = wins[2]
+
+    local pos1 = vim.api.nvim_win_get_position(win1)
+    local pos2 = vim.api.nvim_win_get_position(win2)
+
+    local is_horizontal = pos1[1] ~= pos2[1]
+
+    -- Save buffers
+    local buf1 = vim.api.nvim_win_get_buf(win1)
+    local buf2 = vim.api.nvim_win_get_buf(win2)
+
+    -- Close all but one
+    vim.cmd("only")
+
+    -- Re-split in the opposite direction
+    if is_horizontal then
+        vim.cmd("vsplit")
+    else
+        vim.cmd("split")
+    end
+
+    -- Set buffers
+    vim.api.nvim_win_set_buf(0, buf1)
+    vim.api.nvim_set_current_win(vim.api.nvim_tabpage_list_wins(0)[2])
+    vim.api.nvim_win_set_buf(0, buf2)
+end, {})
+
+
+if vim.g.neovide then
+end
+if vim.g.vscode then
+end
