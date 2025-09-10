@@ -201,6 +201,16 @@ elseif sysname == "Linux" then
 end
 
 -- ============= COMMANDS =============
+vim.api.nvim_create_user_command('MessagesToBuffer', function()
+    local msgs = vim.api.nvim_command_output('messages')
+    local buf = vim.api.nvim_create_buf(false, true) -- [listed=false, scratch=true]
+
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(msgs, '\n'))
+    vim.cmd("split")
+    vim.api.nvim_win_set_buf(0, buf)
+end, {})
+
+
 -- Format the current buffer
 vim.api.nvim_create_user_command("Format", function()
     vim.lsp.buf.format { async = true }
