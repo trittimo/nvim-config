@@ -103,12 +103,6 @@ vim.keymap.set({"n"}, "<C-S-l>", "<cmd>:vertical resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-j>", "<cmd>:resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-k>", "<cmd>:resize -2<CR>")
 
--- Show diagnostic under cursor
-vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
--- Next/previous diagnostic
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
-
 -- LSP configs
 vim.keymap.set({"n", "i"}, "<F2>", vim.lsp.buf.rename, { noremap = true, silent = true })
 
@@ -124,6 +118,11 @@ vim.keymap.set({"n"}, "\\", "<cmd>:noh<CR>")
 -- Pageup/Pagedown
 vim.keymap.set({"v", "i", "n"}, "<C-j>", "<C-d>")
 vim.keymap.set({"v", "i", "n"}, "<C-k>", "<C-u>")
+
+-- See `:help vim.diagnostic.*` for documentation on any of the below functions
+vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
 
 if sysname == "Darwin" then
     if vim.g.neovide then

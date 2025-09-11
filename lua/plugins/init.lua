@@ -28,9 +28,120 @@ return {
         end
     },
     {
+        "seblyng/roslyn.nvim",
+        ft = { "cs", "razor" },
+        config = function()
+            vim.lsp.config("roslyn", {
+                cmd = cmd,
+                settings = {
+                    ["csharp|inlay_hints"] = {
+                        csharp_enable_inlay_hints_for_implicit_object_creation = true,
+                        csharp_enable_inlay_hints_for_implicit_variable_types = true,
+
+                        csharp_enable_inlay_hints_for_lambda_parameter_types = true,
+                        csharp_enable_inlay_hints_for_types = true,
+                        dotnet_enable_inlay_hints_for_indexer_parameters = true,
+                        dotnet_enable_inlay_hints_for_literal_parameters = true,
+                        dotnet_enable_inlay_hints_for_object_creation_parameters = true,
+                        dotnet_enable_inlay_hints_for_other_parameters = true,
+                        dotnet_enable_inlay_hints_for_parameters = true,
+                        dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
+                        dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
+                        dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
+                    },
+                    ["csharp|code_lens"] = {
+                        dotnet_enable_references_code_lens = true,
+                    },
+                },
+            })
+        end,
+        init = function()
+            vim.filetype.add({
+                extension = {
+                    razor = "razor",
+                    cshtml = "razor",
+                },
+            })
+        end,
+    },
+    -- Come back to this some day if it actually fucking works
+    -- {
+    --     "seblyng/roslyn.nvim",
+    --     ft = { "cs", "razor" },
+    --     dependencies = {
+    --         {
+    --             "tris203/rzls.nvim",
+    --             config = true,
+    --         },
+    --     },
+    --     config = function()
+    --         local roslyn_base_path = vim.fs.joinpath(
+    --             vim.fn.stdpath("data"),
+    --             "roslyn",
+    --             "artifacts",
+    --             "bin",
+    --             "Microsoft.CodeAnalysis.LanguageServer",
+    --             "Release",
+    --             "net9.0"
+    --         )
+    --         local rzls_base_path = vim.fs.joinpath(
+    --             vim.fn.stdpath("data"),
+    --             "razor",
+    --             "artifacts",
+    --             "bin",
+    --             "Microsoft.CodeAnalysis.Razor.Compiler",
+    --             "Release",
+    --             "net9.0"
+    --         )
+    --
+    --         local cmd = {
+    --             "dotnet",
+    --             vim.fs.joinpath(roslyn_base_path, "Microsoft.CodeAnalysis.LanguageServer.dll"),
+    --             "--stdio",
+    --             "--logLevel=Information",
+    --             "--extensionLogDirectory=" .. vim.fs.dirname(vim.lsp.get_log_path()),
+    --             "--razorSourceGenerator=" .. vim.fs.joinpath(rzls_base_path, "Microsoft.CodeAnalysis.Razor.Compiler.dll"),
+    --             "--razorDesignTimePath="
+    --                 .. vim.fs.joinpath(rzls_base_path, "Targets", "Microsoft.NET.Sdk.Razor.DesignTime.targets"),
+    --         }
+    --
+    --         vim.lsp.config("roslyn", {
+    --             cmd = cmd,
+    --             handlers = require("rzls.roslyn_handlers"),
+    --             settings = {
+    --                 ["csharp|inlay_hints"] = {
+    --                     csharp_enable_inlay_hints_for_implicit_object_creation = true,
+    --                     csharp_enable_inlay_hints_for_implicit_variable_types = true,
+    --
+    --                     csharp_enable_inlay_hints_for_lambda_parameter_types = true,
+    --                     csharp_enable_inlay_hints_for_types = true,
+    --                     dotnet_enable_inlay_hints_for_indexer_parameters = true,
+    --                     dotnet_enable_inlay_hints_for_literal_parameters = true,
+    --                     dotnet_enable_inlay_hints_for_object_creation_parameters = true,
+    --                     dotnet_enable_inlay_hints_for_other_parameters = true,
+    --                     dotnet_enable_inlay_hints_for_parameters = true,
+    --                     dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
+    --                     dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
+    --                     dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
+    --                 },
+    --                 ["csharp|code_lens"] = {
+    --                     dotnet_enable_references_code_lens = true,
+    --                 },
+    --             },
+    --         })
+    --     end,
+    --     init = function()
+    --         vim.filetype.add({
+    --             extension = {
+    --                 razor = "razor",
+    --                 cshtml = "razor",
+    --             },
+    --         })
+    --     end,
+    -- },
+    {
         "neovim/nvim-lspconfig",
         config = function()
-            -- Stole most of this from https://github.com/jonhoo/configs/blob/master/editor/.config/nvim/init.lua
             vim.lsp.config('rust_analyzer', {
                 -- Server-specific settings. See `:help lspconfig-setup`
                 settings = {
@@ -44,11 +155,12 @@ return {
                     },
                 },
             })
+
             vim.lsp.enable('rust_analyzer')
             vim.lsp.enable('ts_ls')
-
-            -- Global mappings.
-            -- See `:help vim.diagnostic.*` for documentation on any of the below functions
+            vim.lsp.enable('rust_analyzer')
+            vim.lsp.enable('roslyn')
+            vim.lsp.enable('html')
 
             -- Use LspAttach autocommand to only map the following keys
             -- after the language server attaches to the current buffer
@@ -133,7 +245,7 @@ return {
                 extensions = {
                     file_browser = {
                         hijack_netrw = true,
-                        depth = false,
+                        depth = 4,
                         respect_gitignore = true,
                         grouped = true,
                         hide_parent_dir = true,
