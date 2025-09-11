@@ -97,14 +97,17 @@ vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
 -- Exit to normal mode
 vim.keymap.set({"i"}, "kj", "<esc>")
 
--- Show diagnostic under cursor
-vim.keymap.set({"n"}, "<C-.>", "<cmd>:lua vim.diagnostic.open_float()<CR>")
-
 -- Resize current window
 vim.keymap.set({"n"}, "<C-S-h>", "<cmd>:vertical resize -2<CR>")
 vim.keymap.set({"n"}, "<C-S-l>", "<cmd>:vertical resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-j>", "<cmd>:resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-k>", "<cmd>:resize -2<CR>")
+
+-- Show diagnostic under cursor
+vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
+-- Next/previous diagnostic
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
 
 -- LSP configs
 vim.keymap.set({"n", "i"}, "<F2>", vim.lsp.buf.rename, { noremap = true, silent = true })
