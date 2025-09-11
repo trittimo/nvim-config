@@ -245,7 +245,7 @@ return {
                 extensions = {
                     file_browser = {
                         hijack_netrw = true,
-                        depth = 4,
+                        depth = false,
                         respect_gitignore = true,
                         grouped = true,
                         hide_parent_dir = true,
