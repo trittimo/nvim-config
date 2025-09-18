@@ -233,7 +233,8 @@ return {
             { "<leader>o", "<cmd>:Telescope file_browser<cr>", desc = "Telescope Find Files" },
             { "<leader>f",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
             { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },
-            { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" }
+            { "<leader>b", "<cmd>:Telescope buffers<cr>",    desc = "Telescope keymaps" },
+            { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" },
         },
     },
     {
