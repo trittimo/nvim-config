@@ -135,7 +135,11 @@ if not vim.g.vscode then
     vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
 end
 
-if sysname == "Darwin" then
+local function check_sysname(name)
+    if string.find(sysname, "^" .. name) then return true end
+end
+
+if check_sysname("Darwin") then
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
     vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
     vim.keymap.set('c', '<D-v>', '<C-R>"+p') -- Paste command mode
@@ -167,12 +171,12 @@ if sysname == "Darwin" then
     vim.keymap.set("n", "<D-Right>", "w")
     vim.keymap.set("n", "<D-a>", "gg^<S-V><S-G>")
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
-elseif sysname == "Windows_NT" or sysname == "Linux" then
-    vim.keymap.set('v', '<C-S-c>', '"+y') -- Copy
-    vim.keymap.set('n', '<C-S-v>', '"+gpv`[=`]') -- Paste normal mode
-    vim.keymap.set('c', '<C-S-v>', '<C-R>"+p') -- Paste command mode
-    vim.keymap.set('i', '<C-S-v>', '<esc>"+gpa') -- Paste insert mode
-    vim.keymap.set("t", '<C-S-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
+elseif check_sysname("Windows_NT") or check_sysname("Linux") then
+    vim.keymap.set("v", "<C-S-c>", '"+y') -- Copy
+    vim.keymap.set("n", "<C-S-v>", '"+gpv`[=`]') -- Paste normal mode
+    vim.keymap.set("c", "<C-S-v>", '<C-R>"+p') -- Paste command mode
+    vim.keymap.set("i", "<C-S-v>", '<esc>"+gpa') -- Paste insert mode
+    vim.keymap.set("t", "<C-S-v>", '<C-\\><C-n>l"+gpa') -- Paste terminal mode
 
     if vim.g.neovide then
         -- Increase font size
@@ -291,6 +295,12 @@ if vim.g.vscode then
         vscode.action("workbench.action.quickOpen", {
             args = { query = vim.fn.expand('<cword>') }
         })
+    end)
+    vim.keymap.set({"n", "i", "v"}, "<C-S-e>", function()
+        vscode.action("workbench.explorer.fileView.focus")
+    end)
+    vim.keymap.set({"n"}, "<leader>n", function()
+        vscode.action("welcome.showNewFileEntries")
     end)
 end
 
