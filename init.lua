@@ -201,6 +201,10 @@ end
 
 -- ============= COMMANDS =============
 if not vim.g.vscode then
+    vim.api.nvim_create_user_command('Wrap', function()
+        vim.opt.wrap = not vim.o.wrap
+        vim.opt.linebreak = not vim.o.wrap
+    end, {})
     vim.api.nvim_create_user_command('MessagesToBuffer', function()
         local msgs = vim.api.nvim_command_output('messages')
         local buf = vim.api.nvim_create_buf(false, true) -- [listed=false, scratch=true]
