@@ -291,7 +291,7 @@ if vim.g.vscode then
     local vscode = require("vscode")
     -- Keybinds
     vim.keymap.set({"n", "v"}, "<leader>f", function()
-        vscode.action("workbench.action.findInFiles", {
+        vscode.action("workbench.view.search.focus", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
