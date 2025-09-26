@@ -300,9 +300,6 @@ if vim.g.vscode then
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
-    vim.keymap.set({"n", "i", "v"}, "<C-S-e>", function()
-        vscode.action("workbench.explorer.fileView.focus")
-    end)
     vim.keymap.set({"n"}, "<leader>n", function()
         vscode.action("welcome.showNewFileEntries")
     end)
