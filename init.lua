@@ -145,6 +145,7 @@ end
 
 if is_mac then
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
+    vim.keymap.set("n", "<D-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
     vim.keymap.set('c', '<D-v>', '<C-R>"+p') -- Paste command mode
     vim.keymap.set('i', '<D-v>', '<Esc>"+gpa') -- Paste insert mode
@@ -177,6 +178,7 @@ if is_mac then
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
 elseif is_windows or is_linux then
     vim.keymap.set("v", "<C-S-c>", '"+y') -- Copy
+    vim.keymap.set("n", "<C-S-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set("n", "<C-S-v>", '"+gpv`[=`]') -- Paste normal mode
     vim.keymap.set("c", "<C-S-v>", '<C-R>"+p') -- Paste command mode
     vim.keymap.set("i", "<C-S-v>", '<esc>"+gpa') -- Paste insert mode
