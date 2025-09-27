@@ -1,4 +1,12 @@
+-- ============= HELPER FUNCTIONS/CONSTANTS =============
 local sysname = vim.loop.os_uname().sysname
+local is_windows = sysname == "Windows_NT"
+local is_linux = sysname == "Linux"
+local is_mac = sysname == "Darwin"
+local is_neovide = vim.g.neovide
+local is_embedded = vim.g.vscode
+local is_vscode = vim.g.vscode
+local is_native = not is_embedded
 
 -- ============= MISC =============
 -- Spacebar is our leader key
@@ -31,8 +39,7 @@ if not vim.g.vscode then
 end
 
 -- ============= PLUGINS =============
--- Bootstrap lazy.nvim
-if not vim.g.vscode then
+if is_native then
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
     if not (vim.uv or vim.loop).fs_stat(lazypath) then
       local lazyrepo = "https://github.com/folke/lazy.nvim.git"
@@ -61,7 +68,7 @@ if not vim.g.vscode then
 end
 
 -- ============= WHITESPACE =============
-if not vim.g.vscode then
+if is_native then
     vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
 
     local function update_whitespace_highlight()
@@ -91,7 +98,7 @@ vim.g.netrw_altv = 1
 vim.g.netrw_winsize = 25
 vim.cmd([[set nowrap]])
 
-if not vim.g.neovide and not vim.g.vscode then
+if is_native and not is_neovide then
     vim.cmd([[colorscheme habamax]])
 end
 
@@ -125,7 +132,7 @@ vim.keymap.set({"v", "i", "n"}, "<C-j>", "10j")
 vim.keymap.set({"v", "i", "n"}, "<C-k>", "10k")
 
 
-if not vim.g.vscode then
+if is_native then
     -- LSP configs
     vim.keymap.set({"n", "i"}, "<F2>", vim.lsp.buf.rename, { noremap = true, silent = true })
 
@@ -135,11 +142,8 @@ if not vim.g.vscode then
     vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
 end
 
-local function check_sysname(name)
-    if string.find(sysname, "^" .. name) then return true end
-end
 
-if check_sysname("Darwin") then
+if is_mac then
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
     vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
     vim.keymap.set('c', '<D-v>', '<C-R>"+p') -- Paste command mode
@@ -171,14 +175,14 @@ if check_sysname("Darwin") then
     vim.keymap.set("n", "<D-Right>", "w")
     vim.keymap.set("n", "<D-a>", "gg^<S-V><S-G>")
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
-elseif check_sysname("Windows_NT") or check_sysname("Linux") then
+elseif is_windows or is_linux then
     vim.keymap.set("v", "<C-S-c>", '"+y') -- Copy
     vim.keymap.set("n", "<C-S-v>", '"+gpv`[=`]') -- Paste normal mode
     vim.keymap.set("c", "<C-S-v>", '<C-R>"+p') -- Paste command mode
     vim.keymap.set("i", "<C-S-v>", '<esc>"+gpa') -- Paste insert mode
     vim.keymap.set("t", "<C-S-v>", '<C-\\><C-n>l"+gpa') -- Paste terminal mode
 
-    if vim.g.neovide then
+    if is_neovide then
         -- Increase font size
         vim.keymap.set('n', '<C-=>', function()
             vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
@@ -200,7 +204,7 @@ elseif check_sysname("Windows_NT") or check_sysname("Linux") then
 end
 
 -- ============= COMMANDS =============
-if not vim.g.vscode then
+if is_native then
     vim.api.nvim_create_user_command('Wrap', function()
         vim.opt.wrap = not vim.o.wrap
         vim.opt.linebreak = not vim.o.wrap
@@ -287,11 +291,16 @@ if not vim.g.vscode then
 end
 
 -- ============= EMBEDDED CONFIGURATION =============
-if vim.g.vscode then
+if is_vscode then
     local vscode = require("vscode")
     -- Keybinds
     vim.keymap.set({"n", "v"}, "<leader>f", function()
         vscode.action("workbench.view.search.focus", {
+            args = { query = vim.fn.expand('<cword>') }
+        })
+    end)
+    vim.keymap.set({"n", "v"}, "<leader>h", function()
+        vscode.action("workbench.action.replaceInFiles", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
@@ -306,7 +315,7 @@ if vim.g.vscode then
 end
 
 -- ============= NEOVIDE CONFIGURATION =============
-if vim.g.neovide then
+if is_neovide then
     vim.g.neovide_position_animation_length = 0
     vim.g.neovide_cursor_animation_length = 0.00
     vim.g.neovide_cursor_trail_size = 0
