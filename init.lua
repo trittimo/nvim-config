@@ -16,7 +16,7 @@ vim.g.mapleader = " "
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 
-if not vim.g.vscode then
+if is_native then
     -- Use ripgrep for searching
     if vim.fn.executable("rg") == 1 then
         vim.opt.grepprg = "rg --no-heading --vimgrep"
@@ -151,7 +151,7 @@ if is_mac then
     vim.keymap.set('i', '<D-v>', '<Esc>"+gpa') -- Paste insert mode
     vim.keymap.set("t", '<D-v>', '<C-\\><C-n>l"+gpa') -- Paste terminal mode
 
-    if vim.g.neovide then
+    if is_neovide then
         -- Increase font size
         vim.keymap.set('n', '<D-=>', function()
             vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * 1.1
