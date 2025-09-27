@@ -299,7 +299,7 @@ if is_vscode then
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
-    vim.keymap.set({"n", "v"}, "<leader>h", function()
+    vim.keymap.set({"n", "v"}, "<leader>r", function()
         vscode.action("workbench.action.replaceInFiles", {
             args = { query = vim.fn.expand('<cword>') }
         })
