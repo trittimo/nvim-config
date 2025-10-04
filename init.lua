@@ -150,7 +150,7 @@ end
 if is_mac then
     if is_native then
         vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<D->", function()
+        vim.keymap.set("n", "<D-s>", function()
             vim.cmd("mksession!")
             vim.notify("Session saved")
         end)
