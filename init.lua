@@ -19,7 +19,7 @@ vim.opt.smartindent = true
 if is_native then
     -- Use ripgrep for searching
     if vim.fn.executable("rg") == 1 then
-        vim.opt.grepprg = "rg --no-heading --vimgrep"
+        vim.opt.grepprg = "rg --no-heading --vimgrep -C 3"
         vim.opt.grepformat = "%f:%l:%c:%m"
     end
 
@@ -152,6 +152,17 @@ if is_native then
             -- Sets a keybinding the for the current buffer (buffer 0)
             vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
         end,
+    })
+
+    -- When opening copen, increase size of editor by default and move it to the right
+    vim.api.nvim_create_autocmd("FileType", {
+        -- You can find the pattern of a buffer with :set filetype?
+        pattern = "qf",
+        callback = function()
+            -- Move quickfix to the bottom and set height
+            vim.cmd("wincmd L")
+            vim.cmd("vert resize 90")
+        end
     })
 end
 
