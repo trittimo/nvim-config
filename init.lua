@@ -144,6 +144,15 @@ if is_native then
 
     -- Terminal
     vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
+
+    -- In netrw, use q to exit
+    vim.api.nvim_create_autocmd("FileType", {
+        pattern = "netrw",
+        callback = function()
+            -- Sets a keybinding the for the current buffer (buffer 0)
+            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+        end,
+    })
 end
 
 
