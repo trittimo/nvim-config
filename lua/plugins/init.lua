@@ -230,54 +230,55 @@ return {
         'nvim-telescope/telescope.nvim',
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
-            { "<leader>o", "<cmd>:Telescope file_browser<cr>", desc = "Telescope Find Files" },
             { "<leader>f",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
             { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },
             { "<leader>b", "<cmd>:Telescope buffers<cr>",    desc = "Telescope keymaps" },
             { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" },
         },
     },
-    {
-        "nvim-telescope/telescope-file-browser.nvim",
-        dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
-        config = function()
-            local telescope = require("telescope")
-            telescope.setup({
-                extensions = {
-                    file_browser = {
-                        hijack_netrw = true,
-                        depth = false,
-                        respect_gitignore = true,
-                        grouped = true,
-                        hide_parent_dir = true,
-                        mappings = {
-                            i = {
-                                ["<C-k>"] = function(prompt_bufnr)
-                                    local action_set = require("telescope.actions.set")
-                                    action_set.shift_selection(prompt_bufnr, -10)
-                                end,
-                                ["<C-j>"] = function(prompt_bufnr)
-                                    local action_set = require("telescope.actions.set")
-                                    action_set.shift_selection(prompt_bufnr, 10)
-                                end,
-                            },
-                            n = {
-                                ["<C-k>"] = function(prompt_bufnr)
-                                    local action_set = require("telescope.actions.set")
-                                    action_set.shift_selection(prompt_bufnr, -10)
-                                end,
-                                ["<C-j>"] = function(prompt_bufnr)
-                                    local action_set = require("telescope.actions.set")
-                                    action_set.shift_selection(prompt_bufnr, 10)
-                                end,
-                            }
-                        }
-                    }
-                }
-            })
-            telescope.load_extension("file_browser")
-        end
-    },
+    -- This extension just adds too many headaches. It crashes nvim in massive directories
+    -- Nice in theory though
+    -- {
+    --     "nvim-telescope/telescope-file-browser.nvim",
+    --     dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+    --     config = function()
+    --         local telescope = require("telescope")
+    --         telescope.setup({
+    --             extensions = {
+    --                 file_browser = {
+    --                     hijack_netrw = true,
+    --                     depth = false,
+    --                     respect_gitignore = true,
+    --                     grouped = true,
+    --                     hide_parent_dir = true,
+    --                     mappings = {
+    --                         i = {
+    --                             ["<C-k>"] = function(prompt_bufnr)
+    --                                 local action_set = require("telescope.actions.set")
+    --                                 action_set.shift_selection(prompt_bufnr, -10)
+    --                             end,
+    --                             ["<C-j>"] = function(prompt_bufnr)
+    --                                 local action_set = require("telescope.actions.set")
+    --                                 action_set.shift_selection(prompt_bufnr, 10)
+    --                             end,
+    --                         },
+    --                         n = {
+    --                             ["<C-k>"] = function(prompt_bufnr)
+    --                                 local action_set = require("telescope.actions.set")
+    --                                 action_set.shift_selection(prompt_bufnr, -10)
+    --                             end,
+    --                             ["<C-j>"] = function(prompt_bufnr)
+    --                                 local action_set = require("telescope.actions.set")
+    --                                 action_set.shift_selection(prompt_bufnr, 10)
+    --                             end,
+    --                         }
+    --                     }
+    --                 }
+    --             }
+    --         })
+    --         telescope.load_extension("file_browser")
+    --     end
+    -- },
     {
         "AckslD/muren.nvim",
         config = true,

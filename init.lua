@@ -93,7 +93,7 @@ end
 -- ============= LAYOUT =============
 vim.g.netrw_banner = 0
 vim.g.netrw_liststyle = 3
-vim.g.netrw_browse_split = 4
+vim.g.netrw_browse_split = 0
 vim.g.netrw_altv = 1
 vim.g.netrw_winsize = 25
 vim.cmd([[set nowrap]])
@@ -108,6 +108,7 @@ vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
 
 
 -- ============= KEYBINDS (All Systems) =============
+vim.keymap.set({"n"}, "<leader>o", "<cmd>:Ex .<CR>")
 -- Exit to normal mode
 vim.keymap.set({"i"}, "kj", "<esc>")
 
