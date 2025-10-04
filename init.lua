@@ -19,7 +19,7 @@ vim.opt.smartindent = true
 if is_native then
     -- Use ripgrep for searching
     if vim.fn.executable("rg") == 1 then
-        vim.opt.grepprg = "rg --no-heading --vimgrep -C 3"
+        vim.opt.grepprg = "rg --vimgrep --context 2 --smart-case"
         vim.opt.grepformat = "%f:%l:%c:%m"
     end
 
@@ -36,6 +36,30 @@ if is_native then
     vim.cmd(":set relativenumber")
 
     vim.o.tags = "./tags;,tags"
+
+    -- When opening copen, increase size of editor by default and move it to the right
+    vim.api.nvim_create_autocmd("FileType", {
+        -- You can find the pattern of a buffer with :set filetype?
+        pattern = "qf",
+        callback = function()
+            -- Move quickfix to the bottom and set height
+            vim.cmd("wincmd L")
+            vim.cmd("vert resize 90")
+            -- Allow quitting out of a copen buffer with q
+            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+        end
+    })
+
+    -- When performing a search via :grep, automatically run :copen
+    vim.api.nvim_create_autocmd("QuickFixCmdPost", {
+        pattern = "grep",
+        callback = function()
+            -- Could also use 'cwindow' if we only wanted to open the results window when there are actually results
+            vim.cmd("copen")
+            -- Clear the highlight
+            vim.cmd("nohlsearch")
+        end
+    })
 end
 
 -- ============= PLUGINS =============
@@ -107,6 +131,13 @@ vim.o.laststatus = 2
 vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
 
 
+-- ============= OS Specific Configurations=============
+if is_windows then
+    -- Because nvim is unstable as hell and has poor testing practices, they broke piping output from commands
+    -- Presumably this could be removed at some point when nvim gets their shit together
+    vim.cmd([[set shellpipe=>%s\ 2>&1]])
+end
+
 -- ============= KEYBINDS (All Systems) =============
 vim.keymap.set({"n"}, "<leader>o", "<cmd>:Ex .<CR>")
 -- Exit to normal mode
@@ -152,17 +183,6 @@ if is_native then
             -- Sets a keybinding the for the current buffer (buffer 0)
             vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
         end,
-    })
-
-    -- When opening copen, increase size of editor by default and move it to the right
-    vim.api.nvim_create_autocmd("FileType", {
-        -- You can find the pattern of a buffer with :set filetype?
-        pattern = "qf",
-        callback = function()
-            -- Move quickfix to the bottom and set height
-            vim.cmd("wincmd L")
-            vim.cmd("vert resize 90")
-        end
     })
 end
 
@@ -245,6 +265,11 @@ end
 
 -- ============= COMMANDS =============
 if is_native then
+    vim.api.nvim_create_user_command("Grep", function(opts)
+        -- Run grep silently (fills quickfix list)
+        vim.cmd("silent grep! " .. opts.args)
+    end, { nargs = "+", complete = "file" })
+
     vim.api.nvim_create_user_command('Wrap', function()
         vim.opt.wrap = not vim.o.wrap
         vim.opt.linebreak = not vim.o.wrap
