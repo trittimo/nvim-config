@@ -141,10 +141,20 @@ if is_native then
     vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
     vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
     vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+
+    -- Terminal
+    vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
 end
 
 
 if is_mac then
+    if is_native then
+        vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
+        vim.keymap.set("n", "<D->", function()
+            vim.cmd("mksession!")
+            vim.notify("Session saved")
+        end)
+    end
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
     vim.keymap.set("n", "<D-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
@@ -178,6 +188,13 @@ if is_mac then
     vim.keymap.set("n", "<D-a>", "gg^<S-V><S-G>")
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
 elseif is_windows or is_linux then
+    if is_native then
+        vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
+        vim.keymap.set("n", "<C-S-s>", function()
+            vim.cmd("mksession!")
+            vim.notify("Session saved")
+        end)
+    end
     vim.keymap.set("v", "<C-S-c>", '"+y') -- Copy
     vim.keymap.set("n", "<C-S-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set("n", "<C-S-v>", '"+gpv`[=`]') -- Paste normal mode
@@ -291,6 +308,13 @@ if is_native then
         vim.api.nvim_set_current_win(vim.api.nvim_tabpage_list_wins(0)[2])
         vim.api.nvim_win_set_buf(0, buf2)
     end, {})
+
+    -- Reload neovim init
+    -- This doesn't actually work because lazy is shit
+    -- Someday I'll replace it with a real package manager
+    -- vim.api.nvim_create_user_command("Reload", function()
+    --     vim.cmd("luafile $MYVIMRC")
+    -- end, {})
 end
 
 -- ============= EMBEDDED CONFIGURATION =============
