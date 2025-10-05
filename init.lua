@@ -178,12 +178,23 @@ if is_native then
     -- Terminal
     vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
 
-    -- In netrw, use q to exit
     vim.api.nvim_create_autocmd("FileType", {
         pattern = "netrw",
         callback = function()
             -- Sets a keybinding the for the current buffer (buffer 0)
+            -- In netrw, use q to exit
             vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+        end,
+    })
+
+    -- Auto commands for help files
+    vim.api.nvim_create_autocmd("FileType", {
+        pattern = "help",
+        callback = function()
+            -- In the help files, use q to exit
+            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+            -- Immediately open the help window in a new tab instead of a split
+            vim.cmd("wincmd T")
         end,
     })
 end
