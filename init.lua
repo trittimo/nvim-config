@@ -178,6 +178,19 @@ if is_native then
     -- Terminal
     vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
 
+
+    -- Autocommands for man pages
+    vim.api.nvim_create_autocmd("FileType", {
+        pattern = "man",
+        callback = function()
+            -- Use q to quit
+            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+
+            -- Immediately open the window in a new tab instead of a split
+            vim.cmd("wincmd T")
+        end,
+    })
+
     vim.api.nvim_create_autocmd("FileType", {
         pattern = "netrw",
         callback = function()

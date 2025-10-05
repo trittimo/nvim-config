@@ -1,0 +1,11 @@
+# Recurse
+--recurse=yes
+
+# Only look at *.lua files
+--include=*.lua
+
+# Disables all normal language tagging
+--languages=
+
+# Mark tags for headers
+--regex=/\-\- ===\w+ (.*?) ===/\1/t,\1/
