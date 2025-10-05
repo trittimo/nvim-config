@@ -230,6 +230,7 @@ return {
         'nvim-telescope/telescope.nvim',
         dependencies = { 'nvim-lua/plenary.nvim' },
         keys = {
+            { "<leader>t",   "<cmd>:Telescope tags<cr>",  desc = "Telescope tags" },
             { "<leader>m",   "<cmd>:Telescope marks<cr>",  desc = "Telescope marks" },
             { "<leader>f",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
             { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },

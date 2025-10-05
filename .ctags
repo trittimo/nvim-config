@@ -1,11 +1,7 @@
-# Recurse
---recurse=yes
+# Specifies which files to generate tags for
+-L tagfiles
 
-# Only look at *.lua files
---include=*.lua
+--langdef=luaindex
+--regex-luaindex=/\-\- ===+ (.*?) ===/\1/i,index/
 
-# Disables all normal language tagging
---languages=
-
-# Mark tags for headers
---regex=/\-\- ===\w+ (.*?) ===/\1/t,\1/
+--language-force=luaindex
