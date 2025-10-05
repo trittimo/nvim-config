@@ -172,6 +172,8 @@ if is_native then
     vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
     vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
     vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+    vim.keymap.set("n", "<C-l>", "<cmd>:tabnext<CR>")
+    vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
     -- Terminal
     vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
@@ -189,6 +191,7 @@ end
 
 if is_mac then
     if is_native then
+        vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
         vim.keymap.set("n", "<D-s>", function()
             vim.cmd("mksession!")
@@ -229,6 +232,7 @@ if is_mac then
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
 elseif is_windows or is_linux then
     if is_native then
+        vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
         vim.keymap.set("n", "<C-S-s>", function()
             vim.cmd("mksession!")
