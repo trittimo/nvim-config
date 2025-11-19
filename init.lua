@@ -12,6 +12,9 @@ local is_native = not is_embedded
 -- Spacebar is our leader key
 vim.g.mapleader = " "
 
+-- Use global clipboard as default
+vim.opt.clipboard = "unnamedplus"
+
 -- Go to the correct indent level automatically
 vim.opt.autoindent = true
 vim.opt.smartindent = true
@@ -143,12 +146,12 @@ end
 
 -- When deleting/pasting content, don't use the default buffer
 local function smart_operator(op)
-    if vim.v.register == '"' then
-        print("Default register: " .. vim.v.register)
+    -- Note: This register has to be changed if you modify vim.opt.clipboard
+    -- Default is '"', but when using unnamedplus it is '+' (as shown here)
+    if vim.v.register == '+' then
         return '"_' .. op
     end
 
-    print("No change for register: " .. vim.v.register)
     return op
 end
 
