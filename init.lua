@@ -12,6 +12,9 @@ local is_native = not is_embedded
 -- Spacebar is our leader key
 vim.g.mapleader = " "
 
+-- Use global clipboard as default
+vim.opt.clipboard = "unnamedplus"
+
 -- Go to the correct indent level automatically
 vim.opt.autoindent = true
 vim.opt.smartindent = true
@@ -60,6 +63,7 @@ if is_native then
             vim.cmd("nohlsearch")
         end
     })
+
 end
 
 -- ============= PLUGINS =============
@@ -139,7 +143,33 @@ if is_windows then
 end
 
 -- ============= KEYBINDS (All Systems) =============
+
+-- When deleting/pasting content, don't use the default buffer
+local function smart_operator(op)
+    -- Note: This register has to be changed if you modify vim.opt.clipboard
+    -- Default is '"', but when using unnamedplus it is '+' (as shown here)
+    if vim.v.register == '+' then
+        return '"_' .. op
+    end
+
+    return op
+end
+
+-- Ensure that 'dd' is used in the regular way, since it's often used to move lines around
+vim.keymap.set({"n"}, "dd", "dd", { noremap = true })
+
+vim.keymap.set({"n", "x"}, "d", function() return smart_operator("d") end, { expr = true, noremap = true })
+vim.keymap.set({"n", "x"}, "D", function() return smart_operator("D") end, { expr = true, noremap = true })
+vim.keymap.set({"n", "x"}, "c", function() return smart_operator("c") end, { expr = true, noremap = true })
+vim.keymap.set({"n", "x"}, "C", function() return smart_operator("C") end, { expr = true, noremap = true })
+vim.keymap.set({"n", "x"}, "x", function() return smart_operator("x") end, { expr = true, noremap = true })
+vim.keymap.set({"n", "x"}, "X", function() return smart_operator("X") end, { expr = true, noremap = true })
+vim.keymap.set("x", "p", function() return smart_operator("p") end, { expr = true, noremap = true })
+vim.keymap.set("x", "P", function() return smart_operator("P") end, { expr = true, noremap = true })
+
+-- Open a file using explorer (overriden later when embedded)
 vim.keymap.set({"n"}, "<leader>o", "<cmd>:Lex .<CR>")
+
 -- Exit to normal mode
 vim.keymap.set({"i"}, "kj", "<esc>")
 
@@ -397,28 +427,69 @@ end
 if is_vscode then
     local vscode = require("vscode")
     -- Keybinds
-    vim.keymap.set({"n", "v"}, "<leader>f", function()
-        vscode.action("workbench.view.search.focus", {
+    -- Args can be found here: https://github.com/microsoft/vscode/blob/676ae78fa5f71398c50e42f887f5b0da052d9ec8/src/vs/workbench/contrib/search/browser/searchActionsFind.ts#L241
+    -- Example from workbench.action.findInFiles
+    --[[
+       properties: {
+           query: { 'type': 'string' },
+           replace: { 'type': 'string' },
+           preserveCase: { 'type': 'boolean' },
+           triggerSearch: { 'type': 'boolean' },
+           filesToInclude: { 'type': 'string' },
+           filesToExclude: { 'type': 'string' },
+           isRegex: { 'type': 'boolean' },
+           isCaseSensitive: { 'type': 'boolean' },
+           matchWholeWord: { 'type': 'boolean' },
+           useExcludeSettingsAndIgnoreFiles: { 'type': 'boolean' },
+           onlyOpenEditors: { 'type': 'boolean' },
+           showIncludesExcludes: { 'type': 'boolean' }
+        }
+    --]]
+    -- Find
+    vim.keymap.set({"n"}, "<leader>f", function()
+        vscode.action("workbench.action.findInFiles")
+    end)
+    vim.keymap.set({"v"}, "<leader>f", function()
+        vscode.action("workbench.action.findInFiles", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
-    vim.keymap.set({"n", "v"}, "<leader>h", function()
+
+    -- Replace (local file)
+    vim.keymap.set({"n"}, "<leader>h", function()
+        vscode.action("editor.action.startFindReplaceAction")
+    end)
+    vim.keymap.set({"v"}, "<leader>h", function()
         vscode.action("editor.action.startFindReplaceAction", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
-    vim.keymap.set({"n", "v"}, "<leader>r", function()
+
+    -- Replace (all files)
+    vim.keymap.set({"v"}, "<leader>r", function()
         vscode.action("workbench.action.replaceInFiles", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
+    vim.keymap.set({"n"}, "<leader>r", function()
+        vscode.action("workbench.action.replaceInFiles")
+    end)
+
+    -- Open (ctrl+p menu)
     vim.keymap.set({"n"}, "<leader>o", function()
         vscode.action("workbench.action.quickOpen", {
             args = { query = vim.fn.expand('<cword>') }
         })
     end)
+
+    -- Create new file (location relative to currently active file)
     vim.keymap.set({"n"}, "<leader>n", function()
         vscode.action("welcome.showNewFileEntries")
+    end)
+
+    -- Hover tooltip
+    vim.keymap.set({"n"}, "<C-,>", function()
+        vscode.action("editor.action.showHover")
     end)
 end
 
