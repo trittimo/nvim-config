@@ -139,7 +139,7 @@ if is_windows then
 end
 
 -- ============= KEYBINDS (All Systems) =============
-vim.keymap.set({"n"}, "<leader>o", "<cmd>:Ex .<CR>")
+vim.keymap.set({"n"}, "<leader>o", "<cmd>:Lex .<CR>")
 -- Exit to normal mode
 vim.keymap.set({"i"}, "kj", "<esc>")
 
@@ -195,8 +195,11 @@ if is_native then
         pattern = "netrw",
         callback = function()
             -- Sets a keybinding the for the current buffer (buffer 0)
-            -- In netrw, use q to exit
-            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+            -- Use q to exit
+            vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>:bd<CR>", { noremap = true, silent = true, nowait = true})
+            -- <C-l> and <C-h> have their default behavior of navigating between tabs
+            vim.api.nvim_buf_set_keymap(0, "n", "<C-l>", "<cmd>:tabnext<CR>", { noremap = true, silent = true, nowait = true})
+            vim.api.nvim_buf_set_keymap(0, "n", "<C-h>", "<cmd>:tabprev<CR>", { noremap = true, silent = true, nowait = true})
         end,
     })
 
