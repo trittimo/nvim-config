@@ -143,30 +143,6 @@ if is_windows then
 end
 
 -- ============= KEYBINDS (All Systems) =============
-
--- When deleting/pasting content, don't use the default buffer
-local function smart_operator(op)
-    -- Note: This register has to be changed if you modify vim.opt.clipboard
-    -- Default is '"', but when using unnamedplus it is '+' (as shown here)
-    if vim.v.register == '+' then
-        return '"_' .. op
-    end
-
-    return op
-end
-
--- Ensure that 'dd' is used in the regular way, since it's often used to move lines around
-vim.keymap.set({"n"}, "dd", "dd", { noremap = true })
-
-vim.keymap.set({"n", "x"}, "d", function() return smart_operator("d") end, { expr = true, noremap = true })
-vim.keymap.set({"n", "x"}, "D", function() return smart_operator("D") end, { expr = true, noremap = true })
-vim.keymap.set({"n", "x"}, "c", function() return smart_operator("c") end, { expr = true, noremap = true })
-vim.keymap.set({"n", "x"}, "C", function() return smart_operator("C") end, { expr = true, noremap = true })
-vim.keymap.set({"n", "x"}, "x", function() return smart_operator("x") end, { expr = true, noremap = true })
-vim.keymap.set({"n", "x"}, "X", function() return smart_operator("X") end, { expr = true, noremap = true })
-vim.keymap.set("x", "p", function() return smart_operator("p") end, { expr = true, noremap = true })
-vim.keymap.set("x", "P", function() return smart_operator("P") end, { expr = true, noremap = true })
-
 -- Open a file using explorer (overriden later when embedded)
 vim.keymap.set({"n"}, "<leader>o", "<cmd>:Lex .<CR>")
 
