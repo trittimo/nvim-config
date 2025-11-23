@@ -18,6 +18,8 @@ vim.opt.clipboard = "unnamedplus"
 -- Go to the correct indent level automatically
 vim.opt.autoindent = true
 vim.opt.smartindent = true
+vim.opt.wrap = true
+vim.opt.linebreak = true
 
 if is_native then
     -- Use ripgrep for searching
@@ -30,13 +32,11 @@ if is_native then
     vim.opt.tabstop = 4
     vim.opt.shiftwidth = 4
     vim.opt.expandtab = true
+    vim.opt.relativenumber = true
 
     -- Permanent undo file
     -- This file only fills to the undo buffer limit, which is good
     vim.opt.undofile = true
-
-    -- :help vim.opt
-    vim.cmd(":set relativenumber")
 
     vim.o.tags = "./tags;,tags"
 
@@ -124,7 +124,6 @@ vim.g.netrw_liststyle = 3
 vim.g.netrw_browse_split = 0
 vim.g.netrw_altv = 1
 vim.g.netrw_winsize = 25
-vim.cmd([[set nowrap]])
 
 if is_native and not is_neovide then
     vim.cmd([[colorscheme habamax]])
