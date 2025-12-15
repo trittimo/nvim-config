@@ -99,21 +99,61 @@ end
 if is_native then
     vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
 
+    local MAX_FILESIZE = 1024 * 1024 -- 1MB
+    local match_ids = {} -- window-local match IDs
+
+    local function should_skip(bufnr)
+        bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+        -- Skip terminal buffers
+        if vim.bo[bufnr].buftype ~= "" then
+            return true
+        end
+
+        -- Skip large files
+        local name = vim.api.nvim_buf_get_name(bufnr)
+        if name == "" then
+            return true
+        end
+
+        local stat = vim.loop.fs_stat(name)
+        if stat and stat.size > MAX_FILESIZE then
+            return true
+        end
+
+        return false
+    end
+
     local function update_whitespace_highlight()
-        vim.cmd([[match ExtraWhitespace /\s\+$/]])
+        local bufnr = vim.api.nvim_get_current_buf()
+        local winid = vim.api.nvim_get_current_win()
+
+        if should_skip(bufnr) then
+            return
+        end
+
+        -- Avoid duplicate matches
+        if match_ids[winid] then
+            return
+        end
+
+        match_ids[winid] = vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
     end
 
     local function remove_whitespace_highlight()
-        vim.cmd([[call clearmatches()]])
+        local winid = vim.api.nvim_get_current_win()
+
+        if match_ids[winid] then
+            vim.fn.matchdelete(match_ids[winid])
+            match_ids[winid] = nil
+        end
     end
 
     vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "InsertLeave" }, {
-      pattern = "*",
-      callback = update_whitespace_highlight,
+        callback = update_whitespace_highlight,
     })
 
     vim.api.nvim_create_autocmd({ "InsertEnter", "BufWinLeave" }, {
-        pattern = "*",
         callback = remove_whitespace_highlight,
     })
 end
