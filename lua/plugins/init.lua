@@ -223,19 +223,47 @@ return {
             keys = 'etovxqpdygfblzhckisuran'
         },
         keys = {
-            { "f", "<cmd>:HopWord<cr>", desc = "Hop Word" }
+            { "<C-S-f>", "<cmd>:HopWord<cr>", desc = "Hop Word" }
         }
     },
     {
         'nvim-telescope/telescope.nvim',
         dependencies = { 'nvim-lua/plenary.nvim' },
+        opts = function()
+            local actions = require("telescope.actions")
+            return {
+                pickers = {
+                    -- Can setup specific picker defaults here, e.g.
+                    -- tags = {
+                    --     mappings = { ... }
+                    -- }
+                },
+                defaults = {
+                    mappings = {
+                        i = {
+                            ["<C-j>"] = actions.move_selection_next,
+                            ["<C-k>"] = actions.move_selection_previous,
+                        }
+                    },
+                    vimgrep_arguments = {
+                        "rg",
+                        "--color=never",
+                        "--no-heading",
+                        "--with-filename",
+                        "--line-number",
+                        "--column",
+                        "--smart-case",
+                    }
+                }
+            }
+        end,
         keys = {
-            { "<leader>t",   "<cmd>:Telescope tags<cr>",  desc = "Telescope tags" },
-            { "<leader>m",   "<cmd>:Telescope marks<cr>",  desc = "Telescope marks" },
-            { "<leader>f",   "<cmd>:Telescope live_grep<cr>",  desc = "Telescope grep all files" },
-            { "<leader>?", "<cmd>:Telescope keymaps<cr>",    desc = "Telescope keymaps" },
-            { "<leader>b", "<cmd>:Telescope buffers<cr>",    desc = "Telescope keymaps" },
-            { "<C-S-p>",   "<cmd>:Telescope commands<cr>",   desc = "Telescope commands" },
+            { "<leader>t",   "<cmd>:Telescope tags<cr>", desc = "Telescope tags" },
+            { "<leader>m",   "<cmd>:Telescope marks<cr>", desc = "Telescope marks" },
+            { "<leader>f",   "<cmd>:Telescope live_grep<cr>", desc = "Telescope grep all files" },
+            { "<leader>?", "<cmd>:Telescope keymaps<cr>", desc = "Telescope keymaps" },
+            { "<leader>b", "<cmd>:Telescope buffers<cr>", desc = "Telescope keymaps" },
+            { "<C-S-p>",   "<cmd>:Telescope commands<cr>", desc = "Telescope commands" },
         },
     },
     -- This extension just adds too many headaches. It crashes nvim in massive directories

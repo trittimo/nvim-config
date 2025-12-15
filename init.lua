@@ -154,7 +154,6 @@ vim.keymap.set({"n"}, "<C-S-l>", "<cmd>:vertical resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-j>", "<cmd>:resize +2<CR>")
 vim.keymap.set({"n"}, "<C-S-k>", "<cmd>:resize -2<CR>")
 
-
 -- Split screen vertically and focus on the new screen
 vim.keymap.set({"n"}, "<C-\\>", "<cmd>:vsplit<CR><C-w>l")
 
@@ -167,6 +166,10 @@ vim.keymap.set({"n"}, "\\", "<cmd>:noh<CR>")
 -- Pageup/Pagedown
 vim.keymap.set({"v", "i", "n"}, "<C-j>", "10j")
 vim.keymap.set({"v", "i", "n"}, "<C-k>", "10k")
+
+-- Terminal buffer keybinds
+-- Exit terminal mode with c-\ c-\
+vim.keymap.set({"t"}, "<C-\\><C-\\>", "<C-\\><C-n>")
 
 
 if is_native then
