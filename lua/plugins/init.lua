@@ -364,7 +364,25 @@ return {
         opts = {},
     },
     {
-        "ibhagwan/fzf-lua"
+        "junegunn/fzf"
+    },
+    {
+        "junegunn/fzf.vim",
+        dependencies = { "junegunn/fzf" },
+        cmd = { "Files", "FZF", "Rg", "Buffers" },
+        init = function()
+            -- Use fd for file listing (huge speed win)
+            vim.env.FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"
+
+            -- Better layout, still terminal-based
+            vim.env.FZF_DEFAULT_OPTS = "--height=80% --layout=reverse"
+
+            -- Faster file command
+            vim.g.fzf_files_options = "--preview-window=hidden"
+
+            -- :Fzf alias
+            vim.cmd("command! Fzf Files")
+        end
     },
     {
         "lewis6991/gitsigns.nvim",

@@ -179,6 +179,7 @@ if is_windows then
     -- Because nvim is unstable as hell and has poor testing practices, they broke piping output from commands
     -- Presumably this could be removed at some point when nvim gets their shit together
     vim.cmd([[set shellpipe=>%s\ 2>&1]])
+    vim.opt.shell = "powershell"
 end
 
 -- ============= KEYBINDS (All Systems) =============
