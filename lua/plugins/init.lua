@@ -258,12 +258,20 @@ return {
             }
         end,
         keys = {
-            { "<leader>t",   "<cmd>:Telescope tags<cr>", desc = "Telescope tags" },
-            { "<leader>m",   "<cmd>:Telescope marks<cr>", desc = "Telescope marks" },
-            { "<leader>f",   "<cmd>:Telescope live_grep<cr>", desc = "Telescope grep all files" },
+            { "<leader>t", "<cmd>:Telescope tags<cr>", desc = "Telescope tags" },
+            { "<leader>m", "<cmd>:Telescope marks<cr>", desc = "Telescope marks" },
+            { "<leader>f", "<cmd>:Telescope live_grep<cr>", desc = "Telescope grep all files" },
+            { "<leader>f", mode = {"v"}, desc = "Telescope grep all files",
+                function()
+                    require("telescope.builtin").grep_string({
+                        grep_open_files = false,
+                        word_match = "-w"
+                    })
+                end
+            },
             { "<leader>?", "<cmd>:Telescope keymaps<cr>", desc = "Telescope keymaps" },
             { "<leader>b", "<cmd>:Telescope buffers<cr>", desc = "Telescope keymaps" },
-            { "<C-S-p>",   "<cmd>:Telescope commands<cr>", desc = "Telescope commands" },
+            { "<C-S-p>", "<cmd>:Telescope commands<cr>", desc = "Telescope commands" },
         },
     },
     -- This extension just adds too many headaches. It crashes nvim in massive directories
@@ -354,6 +362,9 @@ return {
     {
         "shrynx/line-numbers.nvim",
         opts = {},
+    },
+    {
+        "ibhagwan/fzf-lua"
     },
     {
         "lewis6991/gitsigns.nvim",
