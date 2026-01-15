@@ -4,8 +4,8 @@ local is_windows = sysname == "Windows_NT"
 local is_linux = sysname == "Linux"
 local is_mac = sysname == "Darwin"
 local is_neovide = vim.g.neovide
-local is_embedded = vim.g.vscode
 local is_vscode = vim.g.vscode
+local is_embedded = is_vscode
 local is_native = not is_embedded
 
 -- ============= MISC =============
@@ -178,8 +178,12 @@ vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
 if is_windows then
     -- Because nvim is unstable as hell and has poor testing practices, they broke piping output from commands
     -- Presumably this could be removed at some point when nvim gets their shit together
-    vim.cmd([[set shellpipe=>%s\ 2>&1]])
-    vim.opt.shell = "powershell"
+    vim.opt.shell = "pwsh"
+    vim.o.shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
+    vim.o.shellredir = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode"
+    vim.o.shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode"
+    vim.o.shellquote = ""
+    vim.o.shellxquote = ""
 end
 
 -- ============= KEYBINDS (All Systems) =============
@@ -224,9 +228,58 @@ if is_native then
     vim.keymap.set("n", "<C-l>", "<cmd>:tabnext<CR>")
     vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
-    -- Terminal
-    vim.keymap.set({"n", "i", "v"}, "<C-`>", "<cmd>:term<CR>")
+    local term_settings = {
+        buf = -1,
+        height = math.floor(vim.o.lines * 0.3),
+        width = math.floor(vim.o.columns * 0.3),
+        is_vertical = false
+    }
 
+    local function toggle_terminal()
+        local term_win = -1
+
+        -- 1. Find if terminal buffer is currently visible in any window
+        if term_settings.buf ~= -1 then
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                if vim.api.nvim_win_get_buf(win) == term_settings.buf then
+                    term_win = win
+                    break
+                end
+            end
+        end
+
+        -- 2. Toggle Logic
+        if term_win ~= -1 then
+            -- Terminal is visible: Save dimensions and orientation before closing
+            term_settings.height = vim.api.nvim_win_get_height(term_win)
+            term_settings.width = vim.api.nvim_win_get_width(term_win)
+            term_settings.is_vertical = vim.api.nvim_win_get_width(term_win) < vim.o.columns
+
+            vim.api.nvim_win_close(term_win, false)
+        else
+            -- Terminal is NOT visible: Reopen with saved settings
+            local split_cmd = term_settings.is_vertical and "vertical botright sbuffer " or "botright sbuffer "
+
+            -- Check if buffer exists, otherwise create it
+            if term_settings.buf ~= -1 and vim.api.nvim_buf_is_valid(term_settings.buf) then
+                vim.cmd(split_cmd .. term_settings.buf)
+            else
+                vim.cmd("botright split | term")
+                term_settings.buf = vim.api.nvim_get_current_buf()
+            end
+
+            -- 3. Restore saved dimensions
+            if term_settings.is_vertical then
+                vim.api.nvim_win_set_width(0, term_settings.width)
+            else
+                vim.api.nvim_win_set_height(0, term_settings.height)
+            end
+
+            vim.cmd("startinsert")
+        end
+    end
+
+    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", toggle_terminal, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
     vim.api.nvim_create_autocmd("FileType", {
@@ -510,7 +563,7 @@ if is_vscode then
     vim.keymap.set({"n"}, "<C-,>", function()
         vscode.action("editor.action.showHover")
     end)
-    
+
     vim.keymap.set({"n"}, "]d", function()
         vscode.action("editor.action.marker.next")
     end)
@@ -522,11 +575,12 @@ end
 
 -- ============= NEOVIDE CONFIGURATION =============
 if is_neovide then
-    vim.g.neovide_position_animation_length = 0
-    vim.g.neovide_cursor_animation_length = 0.00
-    vim.g.neovide_cursor_trail_size = 0
-    vim.g.neovide_cursor_animate_in_insert_mode = false
-    vim.g.neovide_cursor_animate_command_line = false
-    vim.g.neovide_scroll_animation_far_lines = 0
-    vim.g.neovide_scroll_animation_length = 0.00
+    -- Bring these back if we're on a computer that just doesn't handle these well
+    -- vim.g.neovide_position_animation_length = 0
+    -- vim.g.neovide_cursor_animation_length = 0.00
+    -- vim.g.neovide_cursor_trail_size = 0
+    -- vim.g.neovide_cursor_animate_in_insert_mode = false
+    -- vim.g.neovide_cursor_animate_command_line = false
+    -- vim.g.neovide_scroll_animation_far_lines = 0
+    -- vim.g.neovide_scroll_animation_length = 0.00
 end

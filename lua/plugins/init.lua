@@ -209,14 +209,6 @@ return {
         end
     },
     {
-        "folke/which-key.nvim",
-        event = "VeryLazy",
-        opts = {
-        },
-        keys = {
-        },
-    },
-    {
         'smoka7/hop.nvim',
         version = "*",
         opts = {
@@ -318,13 +310,6 @@ return {
     --     end
     -- },
     {
-        "AckslD/muren.nvim",
-        config = true,
-        keys = {
-            { "<C-S-r>", "<cmd>:MurenToggle<cr>", desc = "Open Muren (regex replace)" }
-        }
-    },
-    {
         "hrsh7th/nvim-cmp",
         dependencies = {
             "neovim/nvim-lspconfig",
@@ -389,7 +374,7 @@ return {
         event = { "BufReadPre", "BufNewFile" },
         opts = function()
             return {
-                word_diff = true,
+                word_diff = false,
                 on_attach = function(bufnr)
                     local gitsigns = require("gitsigns")
                     local function map(mode, l, r, opts)
