@@ -5,6 +5,14 @@ cd ~/.config/
 git clone git@github.com:trittimo/nvim-config.git nvim
 ```
 
+## Adding Plugins
+Plugins are cloned locally as a subtree to ensure they always work like I expect, and if an author decides to be rude and delist their plugin someday it doesn't matter.
+
+```sh
+# Example:
+git subtree add --prefix plugins/tinted-theming/tinted-vim 'https://github.com/tinted-theming/tinted-vim' main --squash
+```
+
 ## bashrc
 ```sh
 nvim-config-save() {
