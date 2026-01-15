@@ -403,8 +403,18 @@ return {
                     end)
                     -- git diff
                     map('n', '<leader>gd', function()
+                        local current_buffer = vim.api.nvim_get_current_buf()
+                        vim.api.nvim_create_autocmd("BufEnter", {
+                            callback = function(args)
+                                -- The plugin opens the gitsigns buffer and then re-activates the original window
+                                if vim.api.nvim_get_current_buf() ~= current_buffer then
+                                    return false
+                                end
+                                vim.cmd("wincmd h")
+                                return true
+                            end
+                        })
                         gitsigns.diffthis("~")
-                        -- TODO: Switch the active buffer to the diff so :q works as expected
                     end)
                 end
             }
