@@ -510,6 +510,14 @@ if is_vscode then
     vim.keymap.set({"n"}, "<C-,>", function()
         vscode.action("editor.action.showHover")
     end)
+    
+    vim.keymap.set({"n"}, "]d", function()
+        vscode.action("editor.action.marker.next")
+    end)
+
+    vim.keymap.set({"n"}, "[d", function()
+        vscode.action("editor.action.marker.prev")
+    end)
 end
 
 -- ============= NEOVIDE CONFIGURATION =============
