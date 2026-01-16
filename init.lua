@@ -658,7 +658,7 @@ if is_native then
         vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
         vim.keymap.set("n", "<D-s>", mksession)
     elseif is_windows or is_linux then
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-A-e>", function() toggle_buffer(netrw_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
         vim.keymap.set("n", "<C-S-s>", mksession)
