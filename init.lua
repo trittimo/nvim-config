@@ -81,9 +81,6 @@ if is_native then
         install = {
             missing = false
         },
-        pkg = {
-            cache = vim.fn.stdpath("config") .. "/lazy/pkg-cache.lua"
-        },
         readme = {
             root = vim.fn.stdpath("config") .. "/lazy/readme"
         },
