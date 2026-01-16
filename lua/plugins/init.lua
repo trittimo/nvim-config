@@ -1,6 +1,29 @@
 local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
 return {
     {
+        "hrsh7th/cmp-nvim-lsp",
+        dir = plugin_path("hrsh7th/cmp-nvim-lsp"),
+        dev = true
+    },
+    {
+        "hrsh7th/cmp-buffer",
+        dir = plugin_path("hrsh7th/cmp-buffer"),
+        dev = true
+
+    },
+    {
+        "hrsh7th/cmp-path",
+        dir = plugin_path("hrsh7th/cmp-path"),
+        dev = true
+
+    },
+    {
+        "nvim-lua/plenary.nvim",
+        dir = plugin_path("nvim-lua/plenary.nvim"),
+        dev = true
+
+    },
+    {
 		"tinted-theming/tinted-vim",
         dir = plugin_path("tinted-theming/tinted-vim"),
         dev = true,
@@ -235,7 +258,6 @@ return {
         "nvim-telescope/telescope.nvim",
         dir = plugin_path("nvim-telescope/telescope.nvim"),
         dev = true,
-        dependencies = { 'nvim-lua/plenary.nvim' },
         opts = function()
             local actions = require("telescope.actions")
             return {
@@ -328,12 +350,6 @@ return {
         "hrsh7th/nvim-cmp",
         dir = plugin_path("hrsh7th/nvim-cmp"),
         dev = true,
-        dependencies = {
-            "neovim/nvim-lspconfig",
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-        },
         opts = function()
             local cmp = require("cmp")
             return {
@@ -376,7 +392,6 @@ return {
         "junegunn/fzf.vim",
         dir = plugin_path("junegunn/fzf.vim"),
         dev = true,
-        dependencies = { "junegunn/fzf" },
         cmd = { "Files", "FZF", "Rg", "Buffers" },
         init = function()
             -- Use fd for file listing (huge speed win)
