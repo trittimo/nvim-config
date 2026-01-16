@@ -71,11 +71,10 @@ if is_native then
     local lazypath = vim.fn.stdpath("config") .. "/plugin_loader"
 
     vim.opt.rtp:prepend(lazypath)
+    local plugin_spec = require("plugins")
 
     require("lazy").setup({
-        spec = {
-            { import = "plugins" }
-        },
+        spec = plugin_spec,
         change_detection = {
             enabled = false
         },
@@ -97,6 +96,42 @@ if is_native then
             fallback = false
         }
     })
+
+    vim.api.nvim_create_user_command(
+        "PluginUpdate",
+        function(opts)
+            local plugin_path = opts.fargs[1]
+            local branch_name = opts.fargs[2]
+            local github_path = "https://github.com/" .. plugin
+
+            local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
+            -- { code = 0, signal = 0, stdout = 'hello\n', stderr = '' }
+            local result = vim.system({
+                "git",
+                "subtree",
+                "--pull",
+                "--prefix=",
+                plugin_path,
+                branch_name
+            }):wait()
+            if result.code ~= 0 then
+                print("Unable to pull subtree for plugin " .. plugin_path .. ": " .. obj.stderr)
+            else
+                print("Successfully updated " .. plugin_path)
+            end
+        end,
+        {
+            nargs = 1,
+            desc = "Update a specific plugin",
+            complete = function(arg_lead, cmd_line, cursor_pos)
+                local result = {}
+                for _, plugin in pairs(plugin_spec) do
+                    result[#result+1] = plugin[1]
+                end
+                return result
+            end
+        }
+    )
 end
 
 -- ============= WHITESPACE =============
