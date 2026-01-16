@@ -52,8 +52,7 @@ return {
                 },
                 highlight = { enable = true },
                 indent = { enable = true },
-                incremental_selection = { enable = true },
-                install_dir = vim.fn.stdpath("config") .. "/parsers"
+                incremental_selection = { enable = true }
             })
         end
     },
