@@ -115,7 +115,7 @@ if is_native then
                     print("Unable to query " .. github_path .. " for branch information")
                     return
                 end
-                local main_branch = remotes.stdout:match("refs/heads/(.+)%s?")
+                local main_branch = remotes.stdout:match("refs/heads/([^%s]+)")
                 if not main_branch then
                     print("Odd output from git ls-remote. Cannot parse main branch")
                     print(remotes.stdout)
