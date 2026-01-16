@@ -79,8 +79,21 @@ if is_native then
         change_detection = {
             enabled = false
         },
+        install = {
+            missing = false
+        },
+        pkg = {
+            cache = vim.fn.stdpath("config") .. "/lazy/pkg-cache.lua"
+        },
+        readme = {
+            root = vim.fn.stdpath("config") .. "/lazy/readme"
+        },
+        rocks = {
+            root = vim.fn.stdpath("config") .. "/lazy-rocks"
+        },
+        state = vim.fn.stdpath("state") .. "/lazy/state.json",
         dev = {
-            path = vim.fn.stdpath("config") .. "/plugins/",
+            path = vim.fn.stdpath("config") .. "/plugins",
             fallback = false
         }
     })

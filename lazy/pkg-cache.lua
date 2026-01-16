@@ -1,0 +1,1 @@
+return {version=12,pkgs={{name="telescope.nvim",file="telescope.nvim-scm-1.rockspec",dir="C:/Users/Michael/AppData/Local/nvim/plugins/nvim-telescope/telescope.nvim",spec={"telescope.nvim",specs={{"nvim-lua/plenary.nvim",lazy=true,},},build=false,},source="rockspec",},},}

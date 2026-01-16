@@ -1,6 +1,9 @@
+local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
 return {
     {
 		"tinted-theming/tinted-vim",
+        dir = plugin_path("tinted-theming/tinted-vim"),
+        dev = true,
 		lazy = false, -- load at start
 		priority = 1000, -- load first
 		config = function()
@@ -15,20 +18,26 @@ return {
 	},
     {
         "nvim-treesitter/nvim-treesitter",
+        dir = plugin_path("nvim-treesitter/nvim-treesitter"),
+        dev = true,
         build = ":TSUpdate",
+        lazy = false,
         config = function()
-            require("nvim-treesitter.configs").setup({
+            require("nvim-treesitter.config").setup({
                 ensure_installed = {
                     "lua", "python", "javascript", "bash", "cpp", "c", "rust", "c_sharp"
                 },
                 highlight = { enable = true },
                 indent = { enable = true },
-                incremental_selection = { enable = true }
+                incremental_selection = { enable = true },
+                install_dir = vim.fn.stdpath("config") .. "/parsers"
             })
         end
     },
     {
         "seblyng/roslyn.nvim",
+        dir = plugin_path("seblyng/roslyn.nvim"),
+        dev = true,
         ft = { "cs", "razor" },
         config = function()
             vim.lsp.config("roslyn", {
@@ -141,6 +150,8 @@ return {
     -- },
     {
         "neovim/nvim-lspconfig",
+        dir = plugin_path("neovim/nvim-lspconfig"),
+        dev = true,
         config = function()
             vim.lsp.config('rust_analyzer', {
                 -- Server-specific settings. See `:help lspconfig-setup`
@@ -209,7 +220,9 @@ return {
         end
     },
     {
-        'smoka7/hop.nvim',
+        "smoka7/hop.nvim",
+        dir = plugin_path("smoka7/hop.nvim"),
+        dev = true,
         version = "*",
         opts = {
             keys = 'etovxqpdygfblzhckisuran'
@@ -219,7 +232,9 @@ return {
         }
     },
     {
-        'nvim-telescope/telescope.nvim',
+        "nvim-telescope/telescope.nvim",
+        dir = plugin_path("nvim-telescope/telescope.nvim"),
+        dev = true,
         dependencies = { 'nvim-lua/plenary.nvim' },
         opts = function()
             local actions = require("telescope.actions")
@@ -311,6 +326,8 @@ return {
     -- },
     {
         "hrsh7th/nvim-cmp",
+        dir = plugin_path("hrsh7th/nvim-cmp"),
+        dev = true,
         dependencies = {
             "neovim/nvim-lspconfig",
             "hrsh7th/cmp-nvim-lsp",
@@ -346,13 +363,19 @@ return {
     },
     {
         "shrynx/line-numbers.nvim",
+        dir = plugin_path("shrynx/line-numbers.nvim"),
+        dev = true,
         opts = {},
     },
     {
-        "junegunn/fzf"
+        "junegunn/fzf",
+        dir = plugin_path("junegunn/fzf"),
+        dev = true
     },
     {
         "junegunn/fzf.vim",
+        dir = plugin_path("junegunn/fzf.vim"),
+        dev = true,
         dependencies = { "junegunn/fzf" },
         cmd = { "Files", "FZF", "Rg", "Buffers" },
         init = function()
@@ -371,6 +394,8 @@ return {
     },
     {
         "lewis6991/gitsigns.nvim",
+        dir = plugin_path("lewis6991/gitsigns.nvim"),
+        dev = true,
         event = { "BufReadPre", "BufNewFile" },
         opts = function()
             return {
