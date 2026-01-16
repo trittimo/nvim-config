@@ -7,15 +7,16 @@ local is_neovide = vim.g.neovide
 local is_vscode = vim.g.vscode
 local is_embedded = is_vscode
 local is_native = not is_embedded
-local log_level = "DEBUG"
+local log_level = nil
 
 local function log(msg)
-  local log_path = vim.fn.stdpath("log") .. "/init.log"
-  local f = io.open(log_path, "a")
-  if f then
-    f:write(string.format("[%s] [%s] %s\n", os.date("%H:%M:%S"), log_level, msg))
-    f:close()
-  end
+    if not log_level then return end
+    local log_path = vim.fn.stdpath("log") .. "/init.log"
+    local f = io.open(log_path, "a")
+    if f then
+        f:write(string.format("[%s] [%s] %s\n", os.date("%H:%M:%S"), log_level, msg))
+        f:close()
+    end
 end
 
 log("=============================")
@@ -419,6 +420,7 @@ if is_native then
         end
     }
 
+
     local function toggle_buffer(settings)
         local win_id = -1
 
@@ -520,23 +522,95 @@ if is_native then
         end,
     })
 
+    local function mksession()
+        vim.notify("Saving session")
+        vim.cmd("mksession!")
+    end
+    local function ldsession(session_file)
+        log("Loading session " .. session_file)
+        -- 3. Use pcall to safely source the session
+        local ok, err = pcall(vim.cmd, "source " .. session_file)
+
+        if ok then
+            -- netrw windows aren't cooperative when loading from session, so just kill them
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local win_buf = vim.api.nvim_win_get_buf(win)
+                if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) == "netrw" then
+                    pcall(vim.api.nvim_win_close, win, false)
+                elseif vim.api.nvim_buf_get_name(win_buf):match("/NetrwTreeListing") then
+                    pcall(vim.api.nvim_win_close, win, false)
+                end
+            end
+            vim.notify("Session restored from " .. session_file, vim.log.levels.INFO)
+        else
+            vim.notify(string.format("Failed to restore session: %s", err), vim.log.levels.ERROR)
+        end
+    end
+    local started_with_args = false
+    -- Auto create session if we're quitting and didn't start with arguments
+    vim.api.nvim_create_autocmd("VimLeavePre", {
+        group = vim.api.nvim_create_augroup("SaveSession", { clear = true }),
+        callback = function()
+            if vim.v.dying > 0 or started_with_args then return end
+
+            local real_windows = 0
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local win_buf = vim.api.nvim_win_get_buf(win)
+                if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) ~= "netrw" then
+                    real_windows = real_windows + 1
+                    break
+                end
+            end
+
+            if real_windows == 0 then
+                log("The only window we have open is netrw, so we're not saving session")
+                return
+            end
+
+            local ok, err = pcall(mksession)
+
+            log("Saved session")
+            if not ok then
+                log("Something went wrong saving session")
+                vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
+            end
+        end,
+    })
+
+    -- Auto restore session if it exists
+    vim.api.nvim_create_autocmd("VimEnter", {
+        group = vim.api.nvim_create_augroup("RestoreSession", { clear = true }),
+        nested = true,
+        once = true,
+        callback = function()
+            -- 1. Check if Neovim was started with arguments (e.g., nvim file.txt)
+            -- If there are arguments, we probably don't want to overwrite them with a session.
+            if vim.fn.argc() > 0 then
+                started_with_args = true
+                return
+            end
+
+            local session_file = "Session.vim"
+
+            -- 2. Check if the file exists in the current working directory
+            if vim.fn.filereadable(session_file) == 1 then
+                ldsession(session_file)
+            else
+                log("No Session.vim to load")
+            end
+        end,
+    })
 
     if is_mac then
         vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<D-s>", function()
-            vim.cmd("mksession!")
-            vim.notify("Session saved")
-        end)
+        vim.keymap.set("n", "<D-s>", mksession)
     elseif is_windows or is_linux then
         vim.keymap.set({"n", "i", "v", "t"}, "<C-A-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<C-S-s>", function()
-            vim.cmd("mksession!")
-            vim.notify("Session saved")
-        end)
+        vim.keymap.set("n", "<C-S-s>", mksession)
     end
 end
 
