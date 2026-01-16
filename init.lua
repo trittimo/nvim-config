@@ -137,7 +137,7 @@ if is_native then
                 print("Unable to pull subtree for plugin " .. plugin_path .. ": " .. result.stderr)
             else
                 print("Successfully updated " .. plugin_path)
-                print(result.stdout)
+                print(result.stderr .. "\n" .. result.stdout)
             end
         end,
         {
