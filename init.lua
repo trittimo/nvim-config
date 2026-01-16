@@ -7,6 +7,18 @@ local is_neovide = vim.g.neovide
 local is_vscode = vim.g.vscode
 local is_embedded = is_vscode
 local is_native = not is_embedded
+local log_level = "DEBUG"
+
+local function log(msg)
+  local log_path = vim.fn.stdpath("log") .. "/init.log"
+  local f = io.open(log_path, "a")
+  if f then
+    f:write(string.format("[%s] [%s] %s\n", os.date("%H:%M:%S"), log_level, msg))
+    f:close()
+  end
+end
+
+log("=============================")
 
 -- ============= MISC =============
 -- Spacebar is our leader key
@@ -346,9 +358,6 @@ if is_windows then
 end
 
 -- ============= KEYBINDS (All Systems) =============
--- Open a file using explorer (overriden later when embedded)
-vim.keymap.set({"n"}, "<leader>o", "<cmd>:Lex .<CR>")
-
 -- Exit to normal mode
 vim.keymap.set({"i"}, "kj", "<esc>")
 
@@ -391,54 +400,90 @@ if is_native then
         buf = -1,
         height = math.floor(vim.o.lines * 0.3),
         width = math.floor(vim.o.columns * 0.3),
-        is_vertical = false
+        is_vertical = false,
+        initial_position = "botright",
+        start_command = "term",
+        after_created = function() vim.cmd("startinsert") end
     }
 
-    local function toggle_terminal()
-        local term_win = -1
+    local netrw_settings = {
+        buf = -1,
+        height = math.floor(vim.o.lines * 0.25),
+        width = math.floor(vim.o.columns * 0.25),
+        is_vertical = true,
+        initial_position = "topleft",
+        start_command = "Explore .",
+        always_start = true,
+        type_identifier = function(buf)
+            return vim.api.nvim_get_option_value("filetype", { buf = buf }) == "netrw"
+        end
+    }
 
-        -- 1. Find if terminal buffer is currently visible in any window
-        if term_settings.buf ~= -1 then
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-                if vim.api.nvim_win_get_buf(win) == term_settings.buf then
-                    term_win = win
-                    break
-                end
+    local function toggle_buffer(settings)
+        local win_id = -1
+
+        -- Find if terminal buffer is currently visible in any window
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local win_buf = vim.api.nvim_win_get_buf(win)
+            if win_buf == settings.buf then
+                log("Buffer " .. win_buf .. " matches our saved buffer")
+                win_id = win
+                break
+            elseif settings.type_identifier and settings.type_identifier(win_buf) then
+                log("Buffer " .. win_buf .. " is of correct type and is visible")
+                -- This happens if we opened through other means already
+                settings.buf = win_buf
+                win_id = win
+                break
             end
         end
 
-        -- 2. Toggle Logic
-        if term_win ~= -1 then
-            -- Terminal is visible: Save dimensions and orientation before closing
-            term_settings.height = vim.api.nvim_win_get_height(term_win)
-            term_settings.width = vim.api.nvim_win_get_width(term_win)
-            term_settings.is_vertical = vim.api.nvim_win_get_width(term_win) < vim.o.columns
+        if win_id > -1 then
+            -- The buffer is visible: Save dimensions and orientation before closing
+            log("Saving buffer settings before closing")
+            settings.height = vim.api.nvim_win_get_height(win_id)
+            settings.width = vim.api.nvim_win_get_width(win_id)
+            settings.is_vertical = settings.width < settings.height
+            log(string.format("Height: %d, Width: %d, IsVertical: %s", settings.height, settings.width, settings.is_vertical))
 
-            vim.api.nvim_win_close(term_win, false)
+            pcall(vim.api.nvim_win_close, win_id, false)
+            return
+        end
+
+        -- Window is not visible
+        -- Reopen with saved settings
+        local split_cmd = settings.initial_position
+        if settings.is_vertical then split_cmd = "vertical " .. split_cmd end
+
+        if settings.buf > -1 and vim.api.nvim_buf_is_valid(settings.buf) then
+            -- Buffer already exists, just create a split with the content
+            split_cmd = split_cmd .. " sbuffer " .. settings.buf
+            if settings.always_start then split_cmd = split_cmd .. " | " .. settings.start_command end
+            log("Restoring with " .. split_cmd)
+            vim.cmd(split_cmd)
         else
-            -- Terminal is NOT visible: Reopen with saved settings
-            local split_cmd = term_settings.is_vertical and "vertical botright sbuffer " or "botright sbuffer "
-
-            -- Check if buffer exists, otherwise create it
-            if term_settings.buf ~= -1 and vim.api.nvim_buf_is_valid(term_settings.buf) then
-                vim.cmd(split_cmd .. term_settings.buf)
-            else
-                vim.cmd("botright split | term")
-                term_settings.buf = vim.api.nvim_get_current_buf()
-            end
-
-            -- 3. Restore saved dimensions
-            if term_settings.is_vertical then
-                vim.api.nvim_win_set_width(0, term_settings.width)
-            else
-                vim.api.nvim_win_set_height(0, term_settings.height)
-            end
-
-            vim.cmd("startinsert")
+            -- Buffer doesn't exist, create it
+            split_cmd = split_cmd .. " split | " .. settings.start_command
+            log("Buf before starting: " .. vim.api.nvim_get_current_buf())
+            log("Starting with " .. split_cmd)
+            vim.cmd(split_cmd)
+            log("Current buf after starting: " .. vim.api.nvim_get_current_buf())
         end
+        settings.buf = vim.api.nvim_get_current_buf()
+        win_id = vim.api.nvim_get_current_win()
+
+        -- 3. Restore saved dimensions
+        if settings.is_vertical then
+            log("Assuming vertical")
+            vim.api.nvim_win_set_width(0, settings.width)
+        else
+            vim.api.nvim_win_set_height(0, settings.height)
+        end
+
+        if settings.after_created then settings.after_created() end
     end
 
-    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", toggle_terminal, { desc = "Toggle terminal split" })
+    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_settings) end, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
     vim.api.nvim_create_autocmd("FileType", {
@@ -455,7 +500,7 @@ if is_native then
     vim.api.nvim_create_autocmd("FileType", {
         pattern = "netrw",
         callback = function()
-            -- Sets a keybinding the for the current buffer (buffer 0)
+            -- Sets a keybinding for the current buffer (buffer 0)
             -- Use q to exit
             vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>:bd<CR>", { noremap = true, silent = true, nowait = true})
             -- <C-l> and <C-h> have their default behavior of navigating between tabs
@@ -474,18 +519,28 @@ if is_native then
             vim.cmd("wincmd T")
         end,
     })
-end
 
 
-if is_mac then
-    if is_native then
+    if is_mac then
+        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
         vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
         vim.keymap.set("n", "<D-s>", function()
             vim.cmd("mksession!")
             vim.notify("Session saved")
         end)
+    elseif is_windows or is_linux then
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-A-e>", function() toggle_buffer(netrw_settings) end)
+        vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
+        vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
+        vim.keymap.set("n", "<C-S-s>", function()
+            vim.cmd("mksession!")
+            vim.notify("Session saved")
+        end)
     end
+end
+
+if is_mac then
     vim.keymap.set('v', '<D-c>', '"+y') -- Copy
     vim.keymap.set("n", "<D-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set('n', '<D-v>', '"+gpv`[=`]') -- Paste normal mode
@@ -519,14 +574,6 @@ if is_mac then
     vim.keymap.set("n", "<D-a>", "gg^<S-V><S-G>")
     vim.keymap.set("i", "<D-a>", "<Esc>gg^<S-V><S-G>")
 elseif is_windows or is_linux then
-    if is_native then
-        vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
-        vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<C-S-s>", function()
-            vim.cmd("mksession!")
-            vim.notify("Session saved")
-        end)
-    end
     vim.keymap.set("v", "<C-S-c>", '"+y') -- Copy
     vim.keymap.set("n", "<C-S-c>", '"+') -- Select global copy buffer, but don't grab anything
     vim.keymap.set("n", "<C-S-v>", '"+gpv`[=`]') -- Paste normal mode
