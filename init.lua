@@ -102,20 +102,39 @@ if is_native then
         function(opts)
             local plugin_path = opts.fargs[1]
             local branch_name = opts.fargs[2]
-            local github_path = "https://github.com/" .. plugin
+            local github_path = "https://github.com/" .. plugin_path
+            if not branch_name then
+                local remotes = vim.system({
+                    "git",
+                    "ls-remote",
+                    "--symref",
+                    github_path .. ".git",
+                    "HEAD"
+                }):wait()
+                if remotes.code ~= 0 then
+                    print("Unable to query " .. github_path .. " for branch information")
+                    return
+                end
+                local main_branch = remotes.stdout:match("refs/heads/(.+)%s?")
+                if not main_branch then
+                    print("Odd output from git ls-remote. Cannot parse main branch")
+                    print(remotes.stdout)
+                    return
+                end
+                branch_name = main_branch
+            end
 
-            local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
-            -- { code = 0, signal = 0, stdout = 'hello\n', stderr = '' }
             local result = vim.system({
                 "git",
                 "subtree",
-                "--pull",
-                "--prefix=",
-                plugin_path,
-                branch_name
+                "pull",
+                "--prefix=" .. "plugins/" .. plugin_path,
+                github_path,
+                branch_name,
+                "--squash"
             }):wait()
             if result.code ~= 0 then
-                print("Unable to pull subtree for plugin " .. plugin_path .. ": " .. obj.stderr)
+                print("Unable to pull subtree for plugin " .. plugin_path .. ": " .. result.stderr)
             else
                 print("Successfully updated " .. plugin_path)
             end
