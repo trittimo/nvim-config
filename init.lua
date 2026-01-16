@@ -187,7 +187,7 @@ if is_native then
             print(result.stderr .. "\n" .. result.stdout)
         end,
         {
-            nargs = "1",
+            nargs = 1,
             desc = "Remove the specified plugin",
             complete = function(arg_lead, cmd_line, cursor_pos)
                 local result = {}
