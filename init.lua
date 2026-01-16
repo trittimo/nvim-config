@@ -33,6 +33,9 @@ vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.wrap = true
 vim.opt.linebreak = true
+vim.opt.timeoutlen = 300
+-- Defaults are "blank,buffers,curdir,folds,help,tabpages,winsize,terminal"
+vim.opt.sessionoptions = "buffers,curdir,folds,tabpages,winsize"
 
 if is_native then
     -- Use ripgrep for searching
@@ -107,8 +110,6 @@ if is_native then
         }
     })
 
-
--- git subtree add --prefix plugins/tinted-theming/tinted-vim 'https://github.com/tinted-theming/tinted-vim' main --squash
     vim.api.nvim_create_user_command(
         "PluginAdd",
         function(opts)
@@ -267,7 +268,7 @@ if is_native then
     )
 end
 
--- ============= WHITESPACE =============
+-- ============= AUTO COMMANDS =============
 if is_native then
     vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
 
@@ -277,7 +278,9 @@ if is_native then
     local function should_skip(bufnr)
         bufnr = bufnr or vim.api.nvim_get_current_buf()
 
-        -- Skip terminal buffers
+        -- Skip all buffers with a set type, such as terminals
+        -- Interestingly, just regular files don't have a buftype
+        -- Neither does netrw, but that's because netrw is clunky
         if vim.bo[bufnr].buftype ~= "" then
             return true
         end
@@ -382,9 +385,11 @@ vim.keymap.set({"v", "i", "n"}, "<C-j>", "10j")
 vim.keymap.set({"v", "i", "n"}, "<C-k>", "10k")
 
 -- Terminal buffer keybinds
--- Exit terminal mode with c-\ c-\
-vim.keymap.set({"t"}, "<C-\\><C-\\>", "<C-\\><C-n>")
-
+-- Change <Esc> to <C-\><C-n>
+-- Change <C-\><C-\> to terminal <Esc>
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
+vim.keymap.set("t", "<C-\\><C-\\>", "<Esc>") -- Note that noremap is the default, so this won't trigger the above
+vim.keymap.set("t", "kj", "<C-\\><C-n>")
 
 if is_native then
     -- LSP configs
@@ -512,35 +517,81 @@ if is_native then
     })
 
     -- Auto commands for help files
-    vim.api.nvim_create_autocmd("FileType", {
-        pattern = "help",
+    vim.api.nvim_create_autocmd("BufWinEnter", {
+        pattern = "*.txt",
         callback = function()
-            -- In the help files, use q to exit
-            vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
-            -- Immediately open the help window in a new tab instead of a split
-            vim.cmd("wincmd T")
+            if vim.bo.filetype == "help" then
+                -- In the help files, use q to exit
+                vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
+                -- Open it in a new tab
+                vim.cmd("wincmd T")
+            end
         end,
     })
 
     local function mksession()
         vim.notify("Saving session")
+        local bufs = vim.api.nvim_list_bufs()
+        for _, bufnr in ipairs(bufs) do
+            local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
+            local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+            -- If it's a terminal, help, or nofile buffer, skip it
+            if buftype == "terminal" or buftype == "help" or buftype == "nofile" or bufname == "" then
+                -- Setting 'buflisted' to false often excludes it from simple session saves
+                vim.api.nvim_set_option_value("buflisted", false, { buf = bufnr })
+            end
+        end
         vim.cmd("mksession!")
     end
+
     local function ldsession(session_file)
         log("Loading session " .. session_file)
-        -- 3. Use pcall to safely source the session
-        local ok, err = pcall(vim.cmd, "source " .. session_file)
 
-        if ok then
-            -- netrw windows aren't cooperative when loading from session, so just kill them
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-                local win_buf = vim.api.nvim_win_get_buf(win)
-                if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) == "netrw" then
-                    pcall(vim.api.nvim_win_close, win, false)
-                elseif vim.api.nvim_buf_get_name(win_buf):match("/NetrwTreeListing") then
-                    pcall(vim.api.nvim_win_close, win, false)
+        vim.api.nvim_create_autocmd("SessionLoadPost", {
+            once = true,
+            callback = function()
+                -- Kill netrw windows (they shouldn't be save, but let's be sure)
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                    if vim.api.nvim_win_is_valid(win) then
+                        local win_buf = vim.api.nvim_win_get_buf(win)
+                        if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) == "netrw" or
+                            vim.api.nvim_buf_get_name(win_buf):match("/NetrwTreeListing") then
+                            pcall(vim.api.nvim_win_close, win, false)
+                        end
+                    end
                 end
-            end
+
+                -- Clean up any empty tabs
+                -- Happens when tab only had things in them we didn't save, such as help files
+                local tabs = vim.api.nvim_list_tabpages()
+                for i = #tabs, 1, -1 do
+                    local tab = tabs[i]
+                    if vim.api.nvim_tabpage_is_valid(tab) then
+                        local wins = vim.api.nvim_tabpage_list_wins(tab)
+
+                        if #wins == 1 then
+                            local buf = vim.api.nvim_win_get_buf(wins[1])
+                            local buf_name = vim.api.nvim_buf_get_name(buf)
+                            local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
+                            local line_count = vim.api.nvim_buf_line_count(buf)
+                            local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
+
+                            if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
+                                if #vim.api.nvim_list_tabpages() > 1 then
+                                    pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
+                                end
+                            end
+                        end
+                    end
+                end
+                vim.notify("Session cleanup complete", vim.log.levels.INFO)
+            end,
+        })
+
+        -- Now source the session
+        local ok, err = pcall(vim.cmd, "source " .. session_file)
+        if ok then
             vim.notify("Session restored from " .. session_file, vim.log.levels.INFO)
         else
             vim.notify(string.format("Failed to restore session: %s", err), vim.log.levels.ERROR)
@@ -696,6 +747,31 @@ if is_native then
         vim.api.nvim_win_set_buf(0, buf)
     end, {})
 
+    vim.api.nvim_create_user_command('Help', function(opts)
+        local selected_text
+
+        -- If the command was called with a range (e.g., from Visual Mode)
+        if opts.range > 0 then
+            -- Get the lines within the range
+            local lines = vim.api.nvim_buf_get_lines(0, opts.line1 - 1, opts.line2, false)
+            -- In visual mode, we usually just want the first word or the joined line
+            selected_text = table.concat(lines, " "):match("^%s*(.-)%s*$")
+        else
+            -- Fallback: if no range, use the word under the cursor (<cword>)
+            selected_text = vim.fn.expand("<cword>")
+        end
+
+        -- Execute the native help command
+        if selected_text ~= "" then
+            vim.cmd("help " .. selected_text)
+        else
+            print("No text selected for help")
+        end
+    end,
+    {
+        range = true,
+        desc = "Alias for help using visual selection or current word"
+    })
 
     -- Format the current buffer
     vim.api.nvim_create_user_command("Format", function()
