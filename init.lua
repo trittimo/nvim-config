@@ -155,6 +155,7 @@ if is_native then
             local result = vim.system({
                 "git",
                 "rm",
+                "-r",
                 "plugins/" .. plugin_path,
             }):wait()
             if result.code ~= 0 then
