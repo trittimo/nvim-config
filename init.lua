@@ -97,6 +97,108 @@ if is_native then
         }
     })
 
+
+-- git subtree add --prefix plugins/tinted-theming/tinted-vim 'https://github.com/tinted-theming/tinted-vim' main --squash
+    vim.api.nvim_create_user_command(
+        "PluginAdd",
+        function(opts)
+            local plugin_path = opts.fargs[1]
+            local branch_name = opts.fargs[2]
+            local github_path = "https://github.com/" .. plugin_path
+            if not branch_name then
+                local remotes = vim.system({
+                    "git",
+                    "ls-remote",
+                    "--symref",
+                    github_path .. ".git",
+                    "HEAD"
+                }):wait()
+                if remotes.code ~= 0 then
+                    print("Unable to query " .. github_path .. " for branch information")
+                    return
+                end
+                local main_branch = remotes.stdout:match("refs/heads/([^%s]+)")
+                if not main_branch then
+                    print("Odd output from git ls-remote. Cannot parse main branch")
+                    print(remotes.stdout)
+                    return
+                end
+                branch_name = main_branch
+            end
+
+            local result = vim.system({
+                "git",
+                "subtree",
+                "add",
+                "--prefix=" .. "plugins/" .. plugin_path,
+                github_path,
+                branch_name,
+                "--squash"
+            }):wait()
+            if result.code ~= 0 then
+                print("Unable to add subtree for plugin " .. plugin_path .. ": " .. result.stderr)
+            else
+                print("Successfully add " .. plugin_path)
+                print(result.stderr .. "\n" .. result.stdout)
+            end
+        end,
+        {
+            nargs = "+",
+            desc = "Download a specific plugin for the first time"
+        }
+    )
+    vim.api.nvim_create_user_command(
+        "PluginRemove",
+        function(opts)
+            local plugin_path = opts.fargs[1]
+
+            local result = vim.system({
+                "git",
+                "rm",
+                "plugins/" .. plugin_path,
+            }):wait()
+            if result.code ~= 0 then
+                print("Unable to git rm " .. plugin_path .. ": " .. result.stderr)
+                return
+            end
+
+            result = vim.system({
+                "git",
+                "add",
+                "-A"
+            }):wait()
+            if result.code ~= 0 then
+                print("Unable to git add: " .. result.stderr)
+                return
+            end
+
+            result = vim.system({
+                "git",
+                "commit",
+                "-m",
+                "'Remove " .. plugin_path .. "'"
+            }):wait()
+            if result.code ~= 0 then
+                print("Unable to remove plugin: " .. result.stderr)
+                return
+            end
+
+            print("Successfully removed " .. plugin_path)
+            print(result.stderr .. "\n" .. result.stdout)
+        end,
+        {
+            nargs = "1",
+            desc = "Remove the specified plugin",
+            complete = function(arg_lead, cmd_line, cursor_pos)
+                local result = {}
+                for _, plugin in pairs(plugin_spec) do
+                    result[#result+1] = plugin[1]
+                end
+                return result
+            end
+        }
+    )
+
     vim.api.nvim_create_user_command(
         "PluginUpdate",
         function(opts)
@@ -141,7 +243,7 @@ if is_native then
             end
         end,
         {
-            nargs = 1,
+            nargs = "+",
             desc = "Update a specific plugin",
             complete = function(arg_lead, cmd_line, cursor_pos)
                 local result = {}
