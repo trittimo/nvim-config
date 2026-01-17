@@ -53,13 +53,26 @@ return {
         build = ":TSUpdate",
         lazy = false,
         config = function()
-            require("nvim-treesitter.config").setup({
-                ensure_installed = {
-                    "lua", "python", "javascript", "bash", "cpp", "c", "rust", "c_sharp"
-                },
+            local treesitter = require("nvim-treesitter")
+            treesitter.setup({
                 highlight = { enable = true },
                 indent = { enable = true },
                 incremental_selection = { enable = true }
+            })
+            treesitter.install({
+                "lua", "python", "javascript", "bash", "cpp", "c", "rust", "c_sharp", "sql"
+            })
+
+            vim.api.nvim_create_autocmd('FileType', {
+                pattern = { "lua", "python", "javascript", "cpp", "csharp", "sql" },
+                callback = function()
+                    vim.treesitter.start()
+                    vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+                    vim.wo[0][0].foldmethod = 'expr'
+
+                    -- Note, this one is experimental
+                    vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+                end
             })
         end
     },
