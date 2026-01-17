@@ -1,4 +1,4 @@
--- ============= HELPER FUNCTIONS/CONSTANTS =============
+-- ============= CONSTANTS =============
 local sysname = vim.loop.os_uname().sysname
 local is_windows = sysname == "Windows_NT"
 local is_linux = sysname == "Linux"
@@ -8,7 +8,12 @@ local is_vscode = vim.g.vscode
 local is_embedded = is_vscode
 local is_native = not is_embedded
 local log_level = nil
+local should_save_session_on_close = true
+local temp_session_path = vim.fn.stdpath("state") .. "/TempSession.vim"
+local max_whitespace_highlight_filesize = 1024 * 1024 -- 1MB
+local match_ids = {} -- window-local match IDs
 
+-- ============= HELPER FUNCTIONS =============
 local function log(msg)
     if not log_level then return end
     local log_path = vim.fn.stdpath("log") .. "/init.log"
@@ -19,8 +24,190 @@ local function log(msg)
     end
 end
 
-log("=============================")
+local function toggle_buffer(settings)
+    local win_id = -1
 
+    -- Find if terminal buffer is currently visible in any window
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local win_buf = vim.api.nvim_win_get_buf(win)
+        if settings.type_identifier(win_buf) then
+            settings.buf = win_buf
+            win_id = win
+            break
+        end
+    end
+
+    if win_id > -1 then
+        -- The buffer is visible: Save dimensions and orientation before closing
+        log("Saving buffer settings before closing")
+        settings.height = vim.api.nvim_win_get_height(win_id)
+        settings.width = vim.api.nvim_win_get_width(win_id)
+        settings.is_vertical = settings.width < settings.height
+        log(string.format("Height: %d, Width: %d, IsVertical: %s", settings.height, settings.width, settings.is_vertical))
+
+        pcall(vim.api.nvim_win_close, win_id, false)
+        return
+    end
+
+    -- Window is not visible
+    -- Reopen with saved settings
+    local split_cmd = settings.initial_position
+    if settings.is_vertical then split_cmd = "vertical " .. split_cmd end
+
+    if settings.buf > -1 and vim.api.nvim_buf_is_valid(settings.buf) then
+        -- Buffer already exists, just create a split with the content
+        split_cmd = split_cmd .. " sbuffer " .. settings.buf
+        if settings.always_start then split_cmd = split_cmd .. " | " .. settings.start_command end
+        log("Restoring with " .. split_cmd)
+        vim.cmd(split_cmd)
+    else
+        -- Buffer doesn't exist, create it
+        split_cmd = split_cmd .. " split | " .. settings.start_command
+        log("Buf before starting: " .. vim.api.nvim_get_current_buf())
+        log("Starting with " .. split_cmd)
+        vim.cmd(split_cmd)
+        log("Current buf after starting: " .. vim.api.nvim_get_current_buf())
+    end
+    settings.buf = vim.api.nvim_get_current_buf()
+    win_id = vim.api.nvim_get_current_win()
+
+    -- 3. Restore saved dimensions
+    if settings.is_vertical then
+        log("Assuming vertical")
+        vim.api.nvim_win_set_width(0, settings.width)
+    else
+        vim.api.nvim_win_set_height(0, settings.height)
+    end
+
+    if settings.after_created then settings.after_created() end
+end
+
+local function should_skip(bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+    -- Skip all buffers with a set type, such as terminals
+    -- Interestingly, just regular files don't have a buftype
+    -- Neither does netrw, but that's because netrw is clunky
+    if vim.bo[bufnr].buftype ~= "" then
+        return true
+    end
+
+    -- Skip large files
+    local name = vim.api.nvim_buf_get_name(bufnr)
+    if name == "" then
+        return true
+    end
+
+    local stat = vim.loop.fs_stat(name)
+    if stat and stat.size > max_whitespace_highlight_filesize then
+        return true
+    end
+
+    return false
+end
+
+local function update_whitespace_highlight()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local winid = vim.api.nvim_get_current_win()
+
+    if should_skip(bufnr) then
+        return
+    end
+
+    -- Avoid duplicate matches
+    if match_ids[winid] then
+        return
+    end
+
+    match_ids[winid] = vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
+end
+
+local function remove_whitespace_highlight()
+    local winid = vim.api.nvim_get_current_win()
+
+    if match_ids[winid] then
+        vim.fn.matchdelete(match_ids[winid])
+        match_ids[winid] = nil
+    end
+end
+
+local function mksession(session_file)
+    session_file = vim.fn.expand(session_file or (vim.fn.stdpath("state") .. "/Session.vim"))
+    local bufs = vim.api.nvim_list_bufs()
+    for _, bufnr in ipairs(bufs) do
+        local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
+        local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+        local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+        -- If it's a terminal, help, or nofile buffer, skip it
+        if buftype == "terminal" or
+            buftype == "help" or
+            buftype == "nofile" or
+            bufname == "" or
+            filetype == "netrw" then
+            vim.api.nvim_set_option_value("buflisted", false, { buf = bufnr })
+        end
+    end
+    vim.cmd("mksession! " .. session_file)
+    return true
+end
+
+local function ldsession(session_file)
+    session_file = vim.fn.expand(session_file or vim.fn.stdpath("state") .. "/Session.vim")
+    log("Loading session from " .. session_file)
+
+    if not vim.fn.filereadable(vim.fn.expand(session_file)) then
+        log("That session file does not exist")
+    end
+
+    vim.api.nvim_create_autocmd("SessionLoadPost", {
+        once = true,
+        callback = function()
+            -- Kill netrw windows (they shouldn't be saved, but let's be sure)
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                if vim.api.nvim_win_is_valid(win) then
+                    local win_buf = vim.api.nvim_win_get_buf(win)
+                    local filetype = vim.api.nvim_get_option_value("filetype", { buf = win_buf })
+                    local bufname = vim.api.nvim_buf_get_name(win_buf)
+                    if filetype == "netrw" or bufname:match("/NetrwTreeListing") then
+                        pcall(vim.api.nvim_win_close, win, false)
+                    end
+                end
+            end
+
+            -- Clean up any empty tabs
+            -- Happens when tab only had things in them we didn't save, such as help files
+            local tabs = vim.api.nvim_list_tabpages()
+            for i = #tabs, 1, -1 do
+                local tab = tabs[i]
+                if vim.api.nvim_tabpage_is_valid(tab) then
+                    local wins = vim.api.nvim_tabpage_list_wins(tab)
+
+                    if #wins == 1 then
+                        local buf = vim.api.nvim_win_get_buf(wins[1])
+                        local buf_name = vim.api.nvim_buf_get_name(buf)
+                        local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
+                        local line_count = vim.api.nvim_buf_line_count(buf)
+                        local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
+
+                        if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
+                            if #vim.api.nvim_list_tabpages() > 1 then
+                                pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
+                            end
+                        end
+                    end
+                end
+            end
+            log("Session cleanup complete")
+        end,
+    })
+
+    -- Now source the session
+    vim.cmd("source " .. session_file)
+    return true
+end
+
+log("=============================")
 -- ============= MISC =============
 -- Spacebar is our leader key
 vim.g.mapleader = " "
@@ -101,7 +288,7 @@ if is_native then
             root = vim.fn.stdpath("config") .. "/lazy/readme"
         },
         rocks = {
-            root = vim.fn.stdpath("config") .. "/lazy-rocks"
+            enabled = false
         },
         state = vim.fn.stdpath("state") .. "/lazy/state.json",
         dev = {
@@ -272,57 +459,7 @@ end
 if is_native then
     vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
 
-    local MAX_FILESIZE = 1024 * 1024 -- 1MB
-    local match_ids = {} -- window-local match IDs
 
-    local function should_skip(bufnr)
-        bufnr = bufnr or vim.api.nvim_get_current_buf()
-
-        -- Skip all buffers with a set type, such as terminals
-        -- Interestingly, just regular files don't have a buftype
-        -- Neither does netrw, but that's because netrw is clunky
-        if vim.bo[bufnr].buftype ~= "" then
-            return true
-        end
-
-        -- Skip large files
-        local name = vim.api.nvim_buf_get_name(bufnr)
-        if name == "" then
-            return true
-        end
-
-        local stat = vim.loop.fs_stat(name)
-        if stat and stat.size > MAX_FILESIZE then
-            return true
-        end
-
-        return false
-    end
-
-    local function update_whitespace_highlight()
-        local bufnr = vim.api.nvim_get_current_buf()
-        local winid = vim.api.nvim_get_current_win()
-
-        if should_skip(bufnr) then
-            return
-        end
-
-        -- Avoid duplicate matches
-        if match_ids[winid] then
-            return
-        end
-
-        match_ids[winid] = vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
-    end
-
-    local function remove_whitespace_highlight()
-        local winid = vim.api.nvim_get_current_win()
-
-        if match_ids[winid] then
-            vim.fn.matchdelete(match_ids[winid])
-            match_ids[winid] = nil
-        end
-    end
 
     vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "InsertLeave" }, {
         callback = update_whitespace_highlight,
@@ -351,8 +488,6 @@ vim.o.statusline = "%f %y %m %=Ln:%l Col:%c [%p%%]"
 
 -- ============= OS Specific Configurations=============
 if is_windows then
-    -- Because nvim is unstable as hell and has poor testing practices, they broke piping output from commands
-    -- Presumably this could be removed at some point when nvim gets their shit together
     vim.opt.shell = "pwsh"
     vim.o.shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
     vim.o.shellredir = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode"
@@ -409,7 +544,10 @@ if is_native then
         is_vertical = false,
         initial_position = "botright",
         start_command = "term",
-        after_created = function() vim.cmd("startinsert") end
+        after_created = function() vim.cmd("startinsert") end,
+        type_identifier = function(buf)
+            return vim.api.nvim_get_option_value("buftype", { buf = buf }) == "terminal"
+	end
     }
 
     local netrw_settings = {
@@ -426,69 +564,6 @@ if is_native then
     }
 
 
-    local function toggle_buffer(settings)
-        local win_id = -1
-
-        -- Find if terminal buffer is currently visible in any window
-        for _, win in ipairs(vim.api.nvim_list_wins()) do
-            local win_buf = vim.api.nvim_win_get_buf(win)
-            if win_buf == settings.buf then
-                log("Buffer " .. win_buf .. " matches our saved buffer")
-                win_id = win
-                break
-            elseif settings.type_identifier and settings.type_identifier(win_buf) then
-                log("Buffer " .. win_buf .. " is of correct type and is visible")
-                -- This happens if we opened through other means already
-                settings.buf = win_buf
-                win_id = win
-                break
-            end
-        end
-
-        if win_id > -1 then
-            -- The buffer is visible: Save dimensions and orientation before closing
-            log("Saving buffer settings before closing")
-            settings.height = vim.api.nvim_win_get_height(win_id)
-            settings.width = vim.api.nvim_win_get_width(win_id)
-            settings.is_vertical = settings.width < settings.height
-            log(string.format("Height: %d, Width: %d, IsVertical: %s", settings.height, settings.width, settings.is_vertical))
-
-            pcall(vim.api.nvim_win_close, win_id, false)
-            return
-        end
-
-        -- Window is not visible
-        -- Reopen with saved settings
-        local split_cmd = settings.initial_position
-        if settings.is_vertical then split_cmd = "vertical " .. split_cmd end
-
-        if settings.buf > -1 and vim.api.nvim_buf_is_valid(settings.buf) then
-            -- Buffer already exists, just create a split with the content
-            split_cmd = split_cmd .. " sbuffer " .. settings.buf
-            if settings.always_start then split_cmd = split_cmd .. " | " .. settings.start_command end
-            log("Restoring with " .. split_cmd)
-            vim.cmd(split_cmd)
-        else
-            -- Buffer doesn't exist, create it
-            split_cmd = split_cmd .. " split | " .. settings.start_command
-            log("Buf before starting: " .. vim.api.nvim_get_current_buf())
-            log("Starting with " .. split_cmd)
-            vim.cmd(split_cmd)
-            log("Current buf after starting: " .. vim.api.nvim_get_current_buf())
-        end
-        settings.buf = vim.api.nvim_get_current_buf()
-        win_id = vim.api.nvim_get_current_win()
-
-        -- 3. Restore saved dimensions
-        if settings.is_vertical then
-            log("Assuming vertical")
-            vim.api.nvim_win_set_width(0, settings.width)
-        else
-            vim.api.nvim_win_set_height(0, settings.height)
-        end
-
-        if settings.after_created then settings.after_created() end
-    end
 
     vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_settings) end, { desc = "Toggle terminal split" })
 
@@ -529,80 +604,11 @@ if is_native then
         end,
     })
 
-    local function mksession()
-        vim.notify("Saving session")
-        local bufs = vim.api.nvim_list_bufs()
-        for _, bufnr in ipairs(bufs) do
-            local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
-            local bufname = vim.api.nvim_buf_get_name(bufnr)
-
-            -- If it's a terminal, help, or nofile buffer, skip it
-            if buftype == "terminal" or buftype == "help" or buftype == "nofile" or bufname == "" then
-                -- Setting 'buflisted' to false often excludes it from simple session saves
-                vim.api.nvim_set_option_value("buflisted", false, { buf = bufnr })
-            end
-        end
-        vim.cmd("mksession!")
-    end
-
-    local function ldsession(session_file)
-        log("Loading session " .. session_file)
-
-        vim.api.nvim_create_autocmd("SessionLoadPost", {
-            once = true,
-            callback = function()
-                -- Kill netrw windows (they shouldn't be save, but let's be sure)
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                    if vim.api.nvim_win_is_valid(win) then
-                        local win_buf = vim.api.nvim_win_get_buf(win)
-                        if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) == "netrw" or
-                            vim.api.nvim_buf_get_name(win_buf):match("/NetrwTreeListing") then
-                            pcall(vim.api.nvim_win_close, win, false)
-                        end
-                    end
-                end
-
-                -- Clean up any empty tabs
-                -- Happens when tab only had things in them we didn't save, such as help files
-                local tabs = vim.api.nvim_list_tabpages()
-                for i = #tabs, 1, -1 do
-                    local tab = tabs[i]
-                    if vim.api.nvim_tabpage_is_valid(tab) then
-                        local wins = vim.api.nvim_tabpage_list_wins(tab)
-
-                        if #wins == 1 then
-                            local buf = vim.api.nvim_win_get_buf(wins[1])
-                            local buf_name = vim.api.nvim_buf_get_name(buf)
-                            local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
-                            local line_count = vim.api.nvim_buf_line_count(buf)
-                            local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
-
-                            if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
-                                if #vim.api.nvim_list_tabpages() > 1 then
-                                    pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
-                                end
-                            end
-                        end
-                    end
-                end
-                vim.notify("Session cleanup complete", vim.log.levels.INFO)
-            end,
-        })
-
-        -- Now source the session
-        local ok, err = pcall(vim.cmd, "source " .. session_file)
-        if ok then
-            vim.notify("Session restored from " .. session_file, vim.log.levels.INFO)
-        else
-            vim.notify(string.format("Failed to restore session: %s", err), vim.log.levels.ERROR)
-        end
-    end
-    local started_with_args = false
     -- Auto create session if we're quitting and didn't start with arguments
     vim.api.nvim_create_autocmd("VimLeavePre", {
         group = vim.api.nvim_create_augroup("SaveSession", { clear = true }),
         callback = function()
-            if vim.v.dying > 0 or started_with_args then return end
+            if vim.v.dying > 0 or not should_save_session_on_close then return end
 
             local real_windows = 0
             for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -637,17 +643,13 @@ if is_native then
             -- 1. Check if Neovim was started with arguments (e.g., nvim file.txt)
             -- If there are arguments, we probably don't want to overwrite them with a session.
             if vim.fn.argc() > 0 then
-                started_with_args = true
+                should_save_session_on_close = false
                 return
             end
 
-            local session_file = "Session.vim"
-
-            -- 2. Check if the file exists in the current working directory
-            if vim.fn.filereadable(session_file) == 1 then
-                ldsession(session_file)
-            else
-                log("No Session.vim to load")
+            local ok, err = pcall(ldsession)
+            if not ok then
+                vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
             end
         end,
     })
@@ -655,13 +657,9 @@ if is_native then
     if is_mac then
         vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
-        vim.keymap.set("n", "<D-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<D-s>", mksession)
     elseif is_windows or is_linux then
         vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(netrw_settings) end)
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
-        vim.keymap.set("n", "<C-S-o>", "<cmd>:source Session.vim<CR>")
-        vim.keymap.set("n", "<C-S-s>", mksession)
     end
 end
 
@@ -728,6 +726,50 @@ elseif is_windows or is_linux then
 end
 
 -- ============= COMMANDS =============
+-- Create a temporary save (not using the global session)
+vim.api.nvim_create_user_command("Save",
+    function(opts)
+        local session_path = opts.args ~= "" and opts.args or temp_session_path
+        local ok, err = pcall(mksession, session_path)
+
+        if not ok then
+            vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
+        else
+            vim.notify(string.format("Saved a temporary session to %s", temp_session_path), vim.log.levels.INFO)
+        end
+    end,
+    {
+        nargs = "*",
+        complete = "file"
+    })
+
+-- Goes back to whatever we were editing before saving using :Save (or :Config)
+-- Deletes the temporary session after running
+vim.api.nvim_create_user_command("Back",
+    function(opts)
+        should_save_session_on_close = true
+        local session_path = opts.args ~= "" and opts.args or temp_session_path
+        local ok, err = pcall(ldsession, session_path)
+        if not ok then
+            vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
+        end
+    end,
+    {
+        nargs = "*",
+        complete = "file"
+    })
+
+vim.api.nvim_create_user_command("Config",
+    function()
+        -- When opened this way, make sure we don't save the session
+        should_save_session_on_close = false
+        vim.cmd("Save")
+
+        local config_dir = vim.fn.stdpath("config")
+        vim.api.nvim_set_current_dir(config_dir)
+        vim.cmd("e init.lua")
+    end, {})
+
 if is_native then
     vim.api.nvim_create_user_command("Grep", function(opts)
         -- Run grep silently (fills quickfix list)
@@ -806,49 +848,6 @@ if is_native then
         vim.cmd("wincmd l") -- move to right split
         vim.cmd("terminal glow " .. vim.fn.fnameescape(file)) -- open terminal running glow
     end, {})
-
-    vim.api.nvim_create_user_command("Rotate", function()
-        local wins = vim.api.nvim_tabpage_list_wins(0)
-        if #wins ~= 2 then
-            print("Rotate: Only works with exactly two splits.")
-            return
-        end
-
-        -- Get current window layout direction
-        local win1 = wins[1]
-        local win2 = wins[2]
-
-        local pos1 = vim.api.nvim_win_get_position(win1)
-        local pos2 = vim.api.nvim_win_get_position(win2)
-
-        local is_horizontal = pos1[1] ~= pos2[1]
-
-        -- Save buffers
-        local buf1 = vim.api.nvim_win_get_buf(win1)
-        local buf2 = vim.api.nvim_win_get_buf(win2)
-
-        -- Close all but one
-        vim.cmd("only")
-
-        -- Re-split in the opposite direction
-        if is_horizontal then
-            vim.cmd("vsplit")
-        else
-            vim.cmd("split")
-        end
-
-        -- Set buffers
-        vim.api.nvim_win_set_buf(0, buf1)
-        vim.api.nvim_set_current_win(vim.api.nvim_tabpage_list_wins(0)[2])
-        vim.api.nvim_win_set_buf(0, buf2)
-    end, {})
-
-    -- Reload neovim init
-    -- This doesn't actually work because lazy is shit
-    -- Someday I'll replace it with a real package manager
-    -- vim.api.nvim_create_user_command("Reload", function()
-    --     vim.cmd("luafile $MYVIMRC")
-    -- end, {})
 end
 
 -- ============= EMBEDDED CONFIGURATION =============
