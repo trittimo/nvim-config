@@ -18,9 +18,14 @@ local match_ids = {} -- window-local match IDs
 
 -- ============= HELPER FUNCTIONS =============
 local function toggle_buffer(settings)
-    -- We've saved a window and it's still valid, close it
-    if settings.win and vim.api.nvim_win_is_valid(settings.win) then
-        vim.api.nvim_win_close(settings.win, {})
+    if settings.win and -- We have saved a window
+        vim.api.nvim_win_is_valid(settings.win) -- It's still valid
+    then
+        if vim.api.nvim_get_current_win() == settings.win then -- It's currently active
+            vim.api.nvim_win_close(settings.win, {})
+        else -- Not active
+            vim.api.nvim_set_current_win(settings.win) -- Activate it
+        end
         return
     end
 
@@ -525,6 +530,13 @@ if is_native then
         end
     }
 
+    local vim_tree_settings = {
+        -- No need for a restore. The start function will restore it
+        start = function()
+            vim.cmd("NvimTreeToggle")
+        end
+    }
+
     vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
@@ -603,10 +615,10 @@ if is_native then
     })
 
     if is_mac then
-        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", "<cmd>:NvimTreeToggle<cr>", {silent = true, noremap = true})
+        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(vim_tree_settings) end)
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
     elseif is_windows or is_linux then
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", "<cmd>:NvimTreeToggle<cr>", {silent = true, noremap = true})
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(vim_tree_settings) end)
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
     end
 end
