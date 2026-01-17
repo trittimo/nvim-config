@@ -750,9 +750,9 @@ vim.api.nvim_create_user_command("Back",
 
 vim.api.nvim_create_user_command("LspInstall",
     function()
-        local lsp_install = reload_package("lsp_install")
+        local lsp_utils = reload_package("lsp_utils")
         vim.notify("About to run installers, this might take a while")
-        local ok, err = pcall(lsp_install.run)
+        local ok, err = pcall(lsp_utils.setup, lsp_utils)
         if not ok then
             log(err)
             vim.notify(string.format("Error running installers: %s", err), vim.log.levels.ERROR)
@@ -762,7 +762,7 @@ vim.api.nvim_create_user_command("LspInstall",
 
 vim.api.nvim_create_user_command("Data",
     function()
-        local log_path = vim.fn.expand(vim.fn.stdpath("data") .. "/lsp_install.log")
+        local log_path = vim.fn.expand(vim.fn.stdpath("data") .. "/lsp_utils.log")
         vim.cmd("e " .. log_path)
     end, {})
 

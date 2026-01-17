@@ -182,7 +182,7 @@ return {
         dir = plugin_path("neovim/nvim-lspconfig"),
         dev = true,
         config = function()
-            local lsp_install = require("lsp_install")
+            local lsp_utils = require("lsp_utils")
             vim.lsp.config('rust_analyzer', {
                 -- Server-specific settings. See `:help lspconfig-setup`
                 settings = {
@@ -244,9 +244,9 @@ return {
                 }
             })
 
-            if lsp_install.clangd.cmd then
+            if lsp_utils.clangd.cmd then
                 vim.lsp.config("clangd", {
-                    cmd = lsp_install.clangd.cmd(),
+                    cmd = lsp_utils.clangd:cmd(),
                     filetypes = { "c", "cpp", "h" }
                 })
             end
@@ -438,7 +438,7 @@ return {
                     ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
                     -- Accept currently selected item.
                     -- Set `select` to `false` to only confirm explicitly selected items.
-                    ['<CR>'] = cmp.mapping.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert }),
+                    ['<Tab>'] = cmp.mapping.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert }),
                 }),
                 experimental = {
                     ghost_text = true,
