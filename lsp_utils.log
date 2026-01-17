@@ -1,6 +1,0 @@
-[06:03:00] system({ "curl", "-L", "https://github.com/clangd/clangd/releases/download/21.1.8/clangd-$(os_name)-21.1.8.zip", "-o", "/Users/macbook/.local/share/nvim/lsps/clangd/clangd.zip" })
-[06:03:00] _unzip(clangd/clangd.zip,$(dest))
-[06:03:00] system({ "unzip", "clangd/clangd.zip", "-d" })
-[06:24:59] -> ENTER: download { url="https://github.com/clangd/clangd/releases/download/21.1.8/clangd-mac-21.1.8.zip", destination="clangd/clangd.zip" }
-[06:24:59] -> ENTER: unzip { destination="clangd/unpacked/", file="clangd/clangd.zip" }
-[06:24:59] <- EXIT:  unzip
