@@ -269,9 +269,12 @@ if is_native then
             local plugin_path = opts.fargs[1]
             local branch_name = opts.fargs[2]
             local github_path = "https://github.com/" .. plugin_path
+            local config_dir = vim.fn.stdpath("config")
             if not branch_name then
                 local remotes = vim.system({
                     "git",
+                    "-C",
+                    config_dir,
                     "ls-remote",
                     "--symref",
                     github_path .. ".git",
@@ -292,6 +295,8 @@ if is_native then
 
             local result = vim.system({
                 "git",
+                "-C",
+                config_dir,
                 "subtree",
                 "add",
                 "--prefix=" .. "plugins/" .. plugin_path,
@@ -315,9 +320,11 @@ if is_native then
         "PluginRemove",
         function(opts)
             local plugin_path = opts.fargs[1]
-
+            local config_dir = vim.fn.stdpath("config")
             local result = vim.system({
                 "git",
+                "-C",
+                config_dir,
                 "rm",
                 "-r",
                 "plugins/" .. plugin_path,
@@ -329,6 +336,8 @@ if is_native then
 
             result = vim.system({
                 "git",
+                "-C",
+                config_dir,
                 "add",
                 "-A"
             }):wait()
@@ -339,6 +348,8 @@ if is_native then
 
             result = vim.system({
                 "git",
+                "-C",
+                config_dir,
                 "commit",
                 "-m",
                 "'Remove " .. plugin_path .. "'"
@@ -370,9 +381,12 @@ if is_native then
             local plugin_path = opts.fargs[1]
             local branch_name = opts.fargs[2]
             local github_path = "https://github.com/" .. plugin_path
+            local config_dir = vim.fn.stdpath("config")
             if not branch_name then
                 local remotes = vim.system({
                     "git",
+                    "-C",
+                    config_dir,
                     "ls-remote",
                     "--symref",
                     github_path .. ".git",
@@ -393,6 +407,8 @@ if is_native then
 
             local result = vim.system({
                 "git",
+                "-C",
+                config_dir,
                 "subtree",
                 "pull",
                 "--prefix=" .. "plugins/" .. plugin_path,
@@ -510,14 +526,6 @@ if is_native then
         end
     }
 
-    local nvim_tree_toggle_settings = {
-        restore = nil,
-        start = function()
-            vim.cmd("Lexplore " .. vim.fn.getcwd())
-            vim.api.nvim_win_set_width(0, math.floor(vim.o.columns * 0.3))
-        end
-    }
-
     vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
@@ -529,18 +537,6 @@ if is_native then
 
             -- Immediately open the window in a new tab instead of a split
             vim.cmd("wincmd T")
-        end,
-    })
-
-    vim.api.nvim_create_autocmd("FileType", {
-        pattern = "netrw",
-        callback = function()
-            -- Sets a keybinding for the current buffer (buffer 0)
-            -- Use q to exit
-            vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>:bd<CR>", { noremap = true, silent = true, nowait = true})
-            -- <C-l> and <C-h> have their default behavior of navigating between tabs
-            vim.api.nvim_buf_set_keymap(0, "n", "<C-l>", "<cmd>:tabnext<CR>", { noremap = true, silent = true, nowait = true})
-            vim.api.nvim_buf_set_keymap(0, "n", "<C-h>", "<cmd>:tabprev<CR>", { noremap = true, silent = true, nowait = true})
         end,
     })
 
@@ -754,6 +750,52 @@ vim.api.nvim_create_user_command("Config",
         vim.api.nvim_set_current_dir(config_dir)
         vim.cmd("e init.lua")
     end, {})
+
+vim.api.nvim_create_user_command("ConfigSave",
+    function(opts)
+        if not opts.args then
+            vim.notify("Must pass a commit message", vim.log.levels.ERROR)
+            return
+        end
+        local config_dir = vim.fn.stdpath("config")
+        local status = vim.system({
+            "git",
+            "-C",
+            config_dir,
+            "add",
+            "-A"
+        }):wait()
+        if status.code ~= 0 then
+            vim.notify(string.format("Unable to add files: %s", status.err), vim.log.levels.ERROR)
+            return
+        end
+        status = vim.system({
+            "git",
+            "-C",
+            config_dir,
+            "commit",
+            "-m",
+            '"' .. opts.args .. '"'
+        }):wait()
+        if status.code ~= 0 then
+            vim.notify(string.format("Unable to commit files: %s", status.err), vim.log.levels.ERROR)
+            return
+        end
+        status = vim.system({
+            "git",
+            "-C",
+            config_dir,
+            "push"
+        }):wait()
+        if status.code ~= 0 then
+            vim.notify(string.format("Unable to push files: %s", status.err), vim.log.levels.ERROR)
+            return
+        end
+        vim.notify("Committed and pushed", vim.log.levels.INFO)
+    end,
+    {
+        nargs = "+"
+    })
 
 if is_native then
     vim.api.nvim_create_user_command("Grep", function(opts)
