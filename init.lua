@@ -1,3 +1,6 @@
+-- TODOS
+-- Telescope buffer command to close a buffer with <C-d>
+-- 
 -- ============= CONSTANTS =============
 local sysname = vim.loop.os_uname().sysname
 local is_windows = sysname == "Windows_NT"
@@ -25,61 +28,21 @@ local function log(msg)
 end
 
 local function toggle_buffer(settings)
-    local win_id = -1
-
-    -- Find if terminal buffer is currently visible in any window
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-        local win_buf = vim.api.nvim_win_get_buf(win)
-        if settings.type_identifier(win_buf) then
-            settings.buf = win_buf
-            win_id = win
-            break
-        end
-    end
-
-    if win_id > -1 then
-        -- The buffer is visible: Save dimensions and orientation before closing
-        log("Saving buffer settings before closing")
-        settings.height = vim.api.nvim_win_get_height(win_id)
-        settings.width = vim.api.nvim_win_get_width(win_id)
-        settings.is_vertical = settings.width < settings.height
-        log(string.format("Height: %d, Width: %d, IsVertical: %s", settings.height, settings.width, settings.is_vertical))
-
-        pcall(vim.api.nvim_win_close, win_id, false)
+    -- We've saved a window and it's still valid, close it
+    if settings.win and vim.api.nvim_win_is_valid(settings.win) then
+        vim.api.nvim_win_close(settings.win, {})
         return
     end
 
-    -- Window is not visible
-    -- Reopen with saved settings
-    local split_cmd = settings.initial_position
-    if settings.is_vertical then split_cmd = "vertical " .. split_cmd end
-
-    if settings.buf > -1 and vim.api.nvim_buf_is_valid(settings.buf) then
-        -- Buffer already exists, just create a split with the content
-        split_cmd = split_cmd .. " sbuffer " .. settings.buf
-        if settings.always_start then split_cmd = split_cmd .. " | " .. settings.start_command end
-        log("Restoring with " .. split_cmd)
-        vim.cmd(split_cmd)
+    if settings.buf and vim.api.nvim_buf_is_valid(settings.buf) and settings.restore then
+        -- We found a buffer to restore and we have a restore fn, call it
+        settings.restore(settings.buf)
     else
-        -- Buffer doesn't exist, create it
-        split_cmd = split_cmd .. " split | " .. settings.start_command
-        log("Buf before starting: " .. vim.api.nvim_get_current_buf())
-        log("Starting with " .. split_cmd)
-        vim.cmd(split_cmd)
-        log("Current buf after starting: " .. vim.api.nvim_get_current_buf())
+        -- No way to restore, just start
+        settings.start()
     end
+    settings.win = vim.api.nvim_get_current_win()
     settings.buf = vim.api.nvim_get_current_buf()
-    win_id = vim.api.nvim_get_current_win()
-
-    -- 3. Restore saved dimensions
-    if settings.is_vertical then
-        log("Assuming vertical")
-        vim.api.nvim_win_set_width(0, settings.width)
-    else
-        vim.api.nvim_win_set_height(0, settings.height)
-    end
-
-    if settings.after_created then settings.after_created() end
 end
 
 local function should_skip(bufnr)
@@ -538,28 +501,23 @@ if is_native then
     vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
     local term_settings = {
-        buf = -1,
-        height = math.floor(vim.o.lines * 0.3),
-        width = math.floor(vim.o.columns * 0.3),
-        is_vertical = false,
-        initial_position = "botright",
-        start_command = "term",
-        after_created = function() vim.cmd("startinsert") end,
-        type_identifier = function(buf)
-            return vim.api.nvim_get_option_value("buftype", { buf = buf }) == "terminal"
-	end
+        restore = function(buf)
+            vim.cmd("botright sbuffer " .. buf)
+            vim.api.nvim_win_set_height(0, math.floor(vim.o.lines * 0.3))
+            vim.cmd("startinsert")
+        end,
+        start = function()
+            vim.cmd("botright split | term")
+            vim.api.nvim_win_set_height(0, math.floor(vim.o.lines * 0.3))
+            vim.cmd("startinsert")
+        end
     }
 
     local netrw_settings = {
-        buf = -1,
-        height = math.floor(vim.o.lines * 0.25),
-        width = math.floor(vim.o.columns * 0.25),
-        is_vertical = true,
-        initial_position = "topleft",
-        start_command = "Explore .",
-        always_start = true,
-        type_identifier = function(buf)
-            return vim.api.nvim_get_option_value("filetype", { buf = buf }) == "netrw"
+        restore = nil,
+        start = function()
+            vim.cmd("Lexplore " .. vim.fn.getcwd())
+            vim.api.nvim_win_set_width(0, math.floor(vim.o.columns * 0.4))
         end
     }
 
