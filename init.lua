@@ -727,6 +727,38 @@ end
 
 -- ============= COMMANDS =============
 -- Create a temporary save (not using the global session)
+vim.api.nvim_create_user_command("Cd",
+    function(opts)
+        for i, bufn in pairs(vim.api.nvim_list_bufs()) do
+            local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
+            local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
+            if filetype == "netrw" or buftype == "terminal" then
+                local ok, err = pcall(vim.api.nvim_buf_delete, bufn, {force = true})
+                if not ok then
+                    vim.notify(string.format("Cannot close one of the open buffers, will not attempt to cd: %s", err), vim.log.levels.ERROR)
+                    return false
+                end
+            end
+        end
+        local ok, err = pcall(vim.cmd, "cd " .. vim.fn.expand(opts.args))
+        if not ok then
+            vim.notify(string.format("Cannot navigate to path: %s", err), vim.log.levels.ERROR)
+            return false
+        end
+
+        local ok, err = pcall(vim.cmd, "bufdo bwipeout")
+        if not ok then
+            vim.notify(string.format("Cannot close open buffers after changing directory: %s", err), vim.log.levels.ERROR)
+            return false
+        end
+        return true
+    end,
+    {
+        nargs = 1,
+        complete = "file"
+    })
+
+-- Create a temporary save (not using the global session)
 vim.api.nvim_create_user_command("Save",
     function(opts)
         local session_path = opts.args ~= "" and opts.args or temp_session_path
