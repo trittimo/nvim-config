@@ -770,11 +770,20 @@ vim.api.nvim_create_user_command("LspInstall",
         vim.notify("Finished installing")
     end, {})
 
-vim.api.nvim_create_user_command("Data",
-    function()
-        local log_path = vim.fn.expand(vim.fn.stdpath("data") .. "/lsp_utils.log")
+vim.api.nvim_create_user_command("Logs",
+    function(opts)
+        local log_path = vim.fn.expand(vim.fn.stdpath("log") .. "/" .. opts.args)
         vim.cmd("e " .. log_path)
-    end, {})
+    end, {
+        nargs = 1,
+        complete = function(ArgLead, CmdLine, CursorPos)
+            local files = vim.fn.readdir(vim.fn.expand(vim.fn.stdpath("log")))
+            ArgLead = ArgLead or ""
+            return vim.tbl_filter(function(f)
+                return f:match(ArgLead .. ".*%.log$") ~= nil
+            end, files)
+        end
+    })
 
 vim.api.nvim_create_user_command("Config",
     function()

@@ -10,7 +10,7 @@ M.is_mac = M.sysname == "Darwin"
 
 function M.log(self, msg, vars)
     local log_path = vim.fn.stdpath("log") .. "/" .. self.log_path
-    msg = self:interpolate(msg or "", vars or {})
+    msg = self:interpolate(msg or "", vars or self)
     local f = io.open(log_path, "a")
     if f then
         f:write(string.format("[%s] %s\n", os.date("%H:%M:%S"), msg))
