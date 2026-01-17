@@ -517,7 +517,7 @@ if is_native then
         restore = nil,
         start = function()
             vim.cmd("Lexplore " .. vim.fn.getcwd())
-            vim.api.nvim_win_set_width(0, math.floor(vim.o.columns * 0.4))
+            vim.api.nvim_win_set_width(0, math.floor(vim.o.columns * 0.3))
         end
     }
 
