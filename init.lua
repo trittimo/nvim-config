@@ -434,12 +434,6 @@ if is_native then
 end
 
 -- ============= LAYOUT =============
-vim.g.netrw_banner = 0
-vim.g.netrw_liststyle = 3
-vim.g.netrw_browse_split = 0
-vim.g.netrw_altv = 1
-vim.g.netrw_winsize = 25
-
 if is_native and not is_neovide then
     vim.cmd([[colorscheme habamax]])
 end
@@ -500,7 +494,7 @@ if is_native then
     vim.keymap.set("n", "<C-l>", "<cmd>:tabnext<CR>")
     vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
-    local term_settings = {
+    local term_toggle_settings = {
         restore = function(buf)
             vim.cmd("botright sbuffer " .. buf)
             vim.api.nvim_win_set_height(0, math.floor(vim.o.lines * 0.3))
@@ -513,7 +507,7 @@ if is_native then
         end
     }
 
-    local netrw_settings = {
+    local nvim_tree_toggle_settings = {
         restore = nil,
         start = function()
             vim.cmd("Lexplore " .. vim.fn.getcwd())
@@ -521,9 +515,7 @@ if is_native then
         end
     }
 
-
-
-    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_settings) end, { desc = "Toggle terminal split" })
+    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
     vim.api.nvim_create_autocmd("FileType", {
@@ -613,10 +605,10 @@ if is_native then
     })
 
     if is_mac then
-        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(netrw_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(nvim_tree_toggle_settings) end)
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
     elseif is_windows or is_linux then
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(netrw_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(nvim_tree_toggle_settings) end)
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
     end
 end
