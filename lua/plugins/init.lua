@@ -5,7 +5,6 @@ return {
         dir = plugin_path("nvim-tree/nvim-tree.lua"),
         dev = true,
         opts = {
-            -- Nothing here for now
         }
     },
     {
@@ -270,9 +269,16 @@ return {
             return {
                 pickers = {
                     -- Can setup specific picker defaults here, e.g.
-                    -- tags = {
-                    --     mappings = { ... }
-                    -- }
+                    buffers = {
+                        mappings = {
+                            n = {
+                                ["<C-d>"] = actions.delete_buffer
+                            },
+                            i = {
+                                ["<C-d>"] = actions.delete_buffer
+                            }
+                        }
+                    }
                 },
                 defaults = {
                     mappings = {
