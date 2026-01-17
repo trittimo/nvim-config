@@ -372,10 +372,12 @@ return {
                     end
                 },
                 mapping = cmp.mapping.preset.insert({
-                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    ['<C-S-j>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-S-k>'] = cmp.mapping.scroll_docs(4),
                     ['<C-Space>'] = cmp.mapping.complete(),
                     ['<C-e>'] = cmp.mapping.abort(),
+                    ["<C-j>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+                    ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
                     -- Accept currently selected item.
                     -- Set `select` to `false` to only confirm explicitly selected items.
                     ['<CR>'] = cmp.mapping.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert }),
@@ -385,7 +387,8 @@ return {
                 },
                 sources = {
                     { name = "nvim_lsp" },
-                    { name = "path" }
+                    { name = "path" },
+                    { name = "buffer" }
                 },
             }
         end
