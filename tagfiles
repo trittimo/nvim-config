@@ -1,2 +1,4 @@
 init.lua
-lua/plugins/init.lua
+lua/plugins.lua
+lua/lsp_utils.lua
+lua/utils.lua

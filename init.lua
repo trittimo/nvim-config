@@ -13,19 +13,10 @@ local log_level = nil
 local should_save_session_on_close = true
 local temp_session_path = vim.fn.stdpath("state") .. "/TempSession.vim"
 local max_whitespace_highlight_filesize = 1024 * 1024 -- 1MB
+local utils = require("utils")("init.log")
 local match_ids = {} -- window-local match IDs
 
 -- ============= HELPER FUNCTIONS =============
-local function log(msg)
-    if not log_level then return end
-    local log_path = vim.fn.stdpath("log") .. "/init.log"
-    local f = io.open(log_path, "a")
-    if f then
-        f:write(string.format("[%s] [%s] %s\n", os.date("%H:%M:%S"), log_level, msg))
-        f:close()
-    end
-end
-
 local function toggle_buffer(settings)
     -- We've saved a window and it's still valid, close it
     if settings.win and vim.api.nvim_win_is_valid(settings.win) then
@@ -125,10 +116,10 @@ end
 
 local function ldsession(session_file)
     session_file = vim.fn.expand(session_file or vim.fn.stdpath("state") .. "/Session.vim")
-    log("Loading session from " .. session_file)
+    utils:log("Loading session from " .. session_file)
 
     if vim.fn.filereadable(vim.fn.expand(session_file)) == 0 then
-        log("That session file does not exist")
+        utils:log("That session file does not exist")
     end
 
     vim.api.nvim_create_autocmd("SessionLoadPost", {
@@ -169,7 +160,7 @@ local function ldsession(session_file)
                     end
                 end
             end
-            log("Session cleanup complete")
+            utils:log("Session cleanup complete")
         end,
     })
 
@@ -178,7 +169,7 @@ local function ldsession(session_file)
     return true
 end
 
-log("=============================")
+utils:log("=============================")
 -- ============= MISC =============
 -- Spacebar is our leader key
 vim.g.mapleader = " "
@@ -577,15 +568,15 @@ if is_native then
             end
 
             if real_windows == 0 then
-                log("The only window we have open is netrw, so we're not saving session")
+                utils:log("The only window we have open is netrw, so we're not saving session")
                 return
             end
 
             local ok, err = pcall(mksession)
 
-            log("Saved session")
+            utils:log("Saved session")
             if not ok then
-                log("Something went wrong saving session")
+                utils:log("Something went wrong saving session")
                 vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
             end
         end,
@@ -716,6 +707,13 @@ vim.api.nvim_create_user_command("Cd",
     })
 
 -- Create a temporary save (not using the global session)
+vim.api.nvim_create_user_command("Tags",
+    function(opts)
+        utils:system("ctags", "--options=.ctags", "-R", ".")
+    end,
+    {
+    })
+
 vim.api.nvim_create_user_command("Save",
     function(opts)
         local session_path = opts.args ~= "" and opts.args or temp_session_path
@@ -754,7 +752,7 @@ vim.api.nvim_create_user_command("LspInstall",
         vim.notify("About to run installers, this might take a while")
         local ok, err = pcall(lsp_utils.setup, lsp_utils)
         if not ok then
-            log(err)
+            utils:log(err)
             vim.notify(string.format("Error running installers: %s", err), vim.log.levels.ERROR)
         end
         vim.notify("Finished installing")
