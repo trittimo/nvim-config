@@ -93,6 +93,15 @@ local function remove_whitespace_highlight()
     end
 end
 
+local function reload_package(packname)
+    for k in pairs(package.loaded) do
+        if k:match("^" .. packname) then
+            package.loaded[k] = nil
+        end
+    end
+    return require(packname)
+end
+
 local function mksession(session_file)
     session_file = vim.fn.expand(session_file or (vim.fn.stdpath("state") .. "/Session.vim"))
     local bufs = vim.api.nvim_list_bufs()
@@ -739,10 +748,26 @@ vim.api.nvim_create_user_command("Back",
         complete = "file"
     })
 
+vim.api.nvim_create_user_command("LspInstall",
+    function()
+        local lsp_install = reload_package("lsp_install")
+        vim.notify("About to run installers, this might take a while")
+        local ok, err = pcall(lsp_install.run)
+        if not ok then
+            log(err)
+            vim.notify(string.format("Error running installers: %s", err), vim.log.levels.ERROR)
+        end
+        vim.notify("Finished installing")
+    end, {})
+
+vim.api.nvim_create_user_command("Data",
+    function()
+        local log_path = vim.fn.expand(vim.fn.stdpath("data") .. "/lsp_install.log")
+        vim.cmd("e " .. log_path)
+    end, {})
+
 vim.api.nvim_create_user_command("Config",
     function()
-        -- When opened this way, make sure we don't save the session
-        should_save_session_on_close = false
         vim.cmd("Save")
 
         local config_dir = vim.fn.stdpath("config")
