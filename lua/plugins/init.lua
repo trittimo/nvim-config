@@ -3,7 +3,10 @@ return {
     {
         "nvim-tree/nvim-tree.lua",
         dir = plugin_path("nvim-tree/nvim-tree.lua"),
-        dev = true
+        dev = true,
+        opts = {
+            -- Nothing here for now
+        }
     },
     {
         "hrsh7th/cmp-nvim-lsp",

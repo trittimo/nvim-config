@@ -186,6 +186,9 @@ vim.opt.linebreak = true
 vim.opt.timeoutlen = 300
 -- Defaults are "blank,buffers,curdir,folds,help,tabpages,winsize,terminal"
 vim.opt.sessionoptions = "buffers,curdir,folds,tabpages,winsize"
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+vim.opt.termguicolors = true
 
 if is_native then
     -- Use ripgrep for searching
@@ -605,10 +608,10 @@ if is_native then
     })
 
     if is_mac then
-        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(nvim_tree_toggle_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", "<cmd>:NvimTreeToggle<cr>", {silent = true, noremap = true})
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
     elseif is_windows or is_linux then
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(nvim_tree_toggle_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", "<cmd>:NvimTreeToggle<cr>", {silent = true, noremap = true})
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
     end
 end
