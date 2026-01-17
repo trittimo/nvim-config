@@ -127,7 +127,7 @@ local function ldsession(session_file)
     session_file = vim.fn.expand(session_file or vim.fn.stdpath("state") .. "/Session.vim")
     log("Loading session from " .. session_file)
 
-    if not vim.fn.filereadable(vim.fn.expand(session_file)) then
+    if vim.fn.filereadable(vim.fn.expand(session_file)) == 0 then
         log("That session file does not exist")
     end
 
