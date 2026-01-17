@@ -1,6 +1,11 @@
 local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
 return {
     {
+        "nvim-tree/nvim-tree.lua",
+        dir = plugin_path("nvim-tree/nvim-tree.lua"),
+        dev = true
+    },
+    {
         "hrsh7th/cmp-nvim-lsp",
         dir = plugin_path("hrsh7th/cmp-nvim-lsp"),
         dev = true
