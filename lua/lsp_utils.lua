@@ -79,18 +79,16 @@ M.roslyn = {
     binary_name = "Microsoft.CodeAnalysis.LanguageServer.dll",
 }
 
-if M.roslyn:check() then
-    function M.roslyn.cmd(self)
-        return {
-            "dotnet",
-            self:bin_path(utils:interpolate(self.unpack_path, self)),
-            '--logLevel',
-            'Information',
-            '--extensionLogDirectory',
-            vim.fs.joinpath(vim.uv.os_tmpdir(), 'roslyn_ls/logs'),
-            '--stdio'
-        }
-    end
+function M.roslyn.cmd(self)
+    return {
+        "dotnet",
+        self:bin_path(utils:interpolate(self.unpack_path, self)),
+        '--logLevel',
+        'Information',
+        '--extensionLogDirectory',
+        vim.fs.joinpath(vim.uv.os_tmpdir(), 'roslyn_ls/logs'),
+        '--stdio'
+    }
 end
 
 function M.roslyn.setup(self)
