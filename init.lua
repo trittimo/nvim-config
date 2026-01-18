@@ -443,8 +443,6 @@ end
 if is_native then
     vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff0000" })
 
-
-
     vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "InsertLeave" }, {
         callback = update_whitespace_highlight,
     })
@@ -617,6 +615,7 @@ if is_native then
         vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
     elseif is_windows or is_linux then
         vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(vim_tree_settings) end)
+        vim.keymap.set({"n", "i", "v", "t"}, "<C-S-e>", function() toggle_buffer(vim_tree_settings) end) -- Workaround for neovide. C-M-e is my preferred keybind.
         vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
     end
 end

@@ -60,12 +60,26 @@ return {
                 indent = { enable = true },
                 incremental_selection = { enable = true }
             })
-            treesitter.install({
-                "lua", "python", "javascript", "bash", "cpp", "c", "rust", "c_sharp", "sql"
-            })
+            -- https://github.com/nvim-treesitter/nvim-treesitter/blob/main/SUPPORTED_LANGUAGES.md
+            local languages = { -- Map the treesitter name -> filetype
+                lua = "lua",
+                python = "python",
+                javascript = "javascript",
+                bash = "bash",
+                cpp = "cpp",
+                c = "c",
+                rust = "rust",
+                c_sharp = "csharp",
+                sql = "sql",
+                razor = "razor",
+                html = "html",
+            }
+            local _tl = {}; for k,_ in pairs(languages) do table.insert(_tl, k) end
+            local _fl = {}; for _,v in pairs(languages) do table.insert(_fl, v) end
+            treesitter.install(_tl)
 
             vim.api.nvim_create_autocmd('FileType', {
-                pattern = { "lua", "python", "javascript", "cpp", "csharp", "sql" },
+                pattern = _fl,
                 callback = function()
                     vim.treesitter.start()
                     vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
@@ -81,12 +95,12 @@ return {
         "seblyng/roslyn.nvim",
         dir = plugin_path("seblyng/roslyn.nvim"),
         dev = true,
-        ft = { "cs", "razor", "csharp" },
+        ft = { "razor", "csharp" },
         config = function()
             if lsp_utils.roslyn.cmd then
                 vim.lsp.config("roslyn", {
                     cmd = lsp_utils.roslyn:cmd(),
-                    filetypes = { "razor", "cs", "csharp" },
+                    filetypes = { "razor", "csharp" },
                     settings = {
                         ["csharp|inlay_hints"] = {
                             csharp_enable_inlay_hints_for_implicit_object_creation = true,
@@ -189,15 +203,13 @@ return {
             if lsp_utils.clangd.cmd then
                 vim.lsp.config("clangd", {
                     cmd = lsp_utils.clangd:cmd(),
-                    filetypes = { "c", "cpp", "h" }
+                    filetypes = { "c", "cpp" }
                 })
             end
 
             vim.lsp.enable('rust_analyzer')
-            vim.lsp.enable('ts_ls')
-            vim.lsp.enable('rust_analyzer')
-            vim.lsp.enable('html')
-            vim.lsp.enable('cpp')
+            -- vim.lsp.enable('ts_ls')
+            -- vim.lsp.enable('html')
             vim.lsp.enable('clangd')
             vim.lsp.enable('lua_ls')
 
@@ -221,28 +233,6 @@ return {
                     vim.keymap.set('n', '<F2>', vim.lsp.buf.rename, opts)
                     vim.keymap.set({'n','v','i'}, '<C-,>', vim.lsp.buf.code_action, opts)
                     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-
-                    local client = vim.lsp.get_client_by_id(ev.data.client_id)
-
-                    -- TODO: find some way to make this only apply to the current line.
-                    -- if client.server_capabilities.inlayHintProvider then
-                    --     vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
-                    -- end
-
-                    -- None of this semantics tokens business.
-                    -- https://www.reddit.com/r/neovim/comments/143efmd/is_it_possible_to_disable_treesitter_completely/
-                    client.server_capabilities.semanticTokensProvider = nil
-
-                    -- format on save for Rust
-                    -- if client.server_capabilities.documentFormattingProvider then
-                    --     vim.api.nvim_create_autocmd("BufWritePre", {
-                    --         group = vim.api.nvim_create_augroup("RustFormat", { clear = true }),
-                    --         buffer = bufnr,
-                    --         callback = function()
-                    --             vim.lsp.buf.format({ bufnr = bufnr })
-                    --         end,
-                    --     })
-                    -- end
                 end,
             })
         end
