@@ -8,8 +8,8 @@ local is_vscode = vim.g.vscode
 local is_embedded = is_vscode
 local is_native = not is_embedded
 local log_level = nil
-local should_save_session_on_close = true
-local temp_session_path = vim.fn.stdpath("state") .. "/TempSession.vim"
+local saved_sessions_path = vim.fn.stdpath("state") .. "/sessions.mpack"
+local max_saved_sessions = 10
 local max_whitespace_highlight_filesize = 1024 * 1024 -- 1MB
 local utils = require("utils")("init.log")
 local match_ids = {} -- window-local match IDs
@@ -105,8 +105,38 @@ local function reload_package(packname)
     return require(packname)
 end
 
+local function get_session_path()
+    return vim.fn.getcwd() .. "/Session.vim"
+end
+
 local function mksession(session_file)
-    session_file = vim.fn.expand(session_file or (vim.fn.stdpath("state") .. "/Session.vim"))
+    local session_path = vim.fs.normalize(get_session_path())
+    if session_file and not session_file:match("^%s+$") then
+        session_path = vim.fs.normalize(vim.fn.expand(session_file))
+    end
+
+    local session_state = utils:read_mpack_file(saved_sessions_path)
+    if not session_state or not session_state.current then
+        session_state = {current = 1}
+    end
+
+    for key, path in pairs(session_state) do
+        if path == session_path then
+            utils:log(tostring(path) .. " == " .. session_path)
+            session_state[key] = nil
+        else
+            utils:log(tostring(path) .. " ~= " .. session_path)
+        end
+    end
+    if session_state[session_state.current] then
+        session_state.current = session_state.current + 1
+        if session_state.current > max_saved_sessions then
+            session_state.current = 1
+        end
+    end
+
+    session_state[session_state.current] = session_path
+
     local bufs = vim.api.nvim_list_bufs()
     for _, bufnr in ipairs(bufs) do
         local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
@@ -122,62 +152,76 @@ local function mksession(session_file)
             vim.api.nvim_set_option_value("buflisted", false, { buf = bufnr })
         end
     end
-    vim.cmd("mksession! " .. session_file)
+    vim.cmd("mksession! " .. session_path)
+    utils:write_as_mpack(saved_sessions_path, session_state)
     return true
 end
 
-local function ldsession(session_file)
-    session_file = vim.fn.expand(session_file or vim.fn.stdpath("state") .. "/Session.vim")
-    utils:log("Loading session from " .. session_file)
-
-    if vim.fn.filereadable(vim.fn.expand(session_file)) == 0 then
-        utils:log("That session file does not exist")
+local function ldsession(session_file, go_previous)
+    local session_path = session_file and vim.fs.normalize(vim.fn.expand(session_file))
+    if session_path and not utils:file_exists(session_path) then
+        session_path = nil
+        session_file = nil
     end
-
-    vim.api.nvim_create_autocmd("SessionLoadPost", {
-        once = true,
-        callback = function()
-            -- Kill netrw windows (they shouldn't be saved, but let's be sure)
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-                if vim.api.nvim_win_is_valid(win) then
-                    local win_buf = vim.api.nvim_win_get_buf(win)
-                    local filetype = vim.api.nvim_get_option_value("filetype", { buf = win_buf })
-                    local bufname = vim.api.nvim_buf_get_name(win_buf)
-                    if filetype == "netrw" or bufname:match("/NetrwTreeListing") then
-                        pcall(vim.api.nvim_win_close, win, false)
-                    end
-                end
+    local session_state = utils:read_mpack_file(saved_sessions_path)
+    if not session_state then
+        session_state = {current = 2}
+    end
+    if go_previous then
+        for i = 1, max_saved_sessions do
+            session_state.current = session_state.current - 1
+            if session_state.current < 1 then
+                session_state.current = max_saved_sessions
             end
-
-            -- Clean up any empty tabs
-            -- Happens when tab only had things in them we didn't save, such as help files
-            local tabs = vim.api.nvim_list_tabpages()
-            for i = #tabs, 1, -1 do
-                local tab = tabs[i]
-                if vim.api.nvim_tabpage_is_valid(tab) then
-                    local wins = vim.api.nvim_tabpage_list_wins(tab)
-
-                    if #wins == 1 then
-                        local buf = vim.api.nvim_win_get_buf(wins[1])
-                        local buf_name = vim.api.nvim_buf_get_name(buf)
-                        local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
-                        local line_count = vim.api.nvim_buf_line_count(buf)
-                        local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
-
-                        if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
-                            if #vim.api.nvim_list_tabpages() > 1 then
-                                pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
-                            end
-                        end
-                    end
-                end
+            if session_state[session_state.current] then
+                session_path = session_state[session_state.current]
+                break
             end
-            utils:log("Session cleanup complete")
-        end,
-    })
+        end
+    elseif not session_path then
+        session_path = session_state[session_state.current]
+    end
+    if not session_path or not utils:file_exists(session_path) then
+        vim.notify("Could not find a valid session path to load!", vim.log.levels.ERROR)
+        return false
+    end
+    utils:log("Found session path to load: " .. session_path)
+
+    -- vim.api.nvim_create_autocmd("SessionLoadPost", {
+    --     once = true,
+    --     callback = function()
+    --         -- Clean up any empty tabs
+    --         local tabs = vim.api.nvim_list_tabpages()
+    --         for i = #tabs, 1, -1 do
+    --             local tab = tabs[i]
+    --             if vim.api.nvim_tabpage_is_valid(tab) then
+    --                 local wins = vim.api.nvim_tabpage_list_wins(tab)
+    --
+    --                 if #wins == 1 then
+    --                     local buf = vim.api.nvim_win_get_buf(wins[1])
+    --                     local buf_name = vim.api.nvim_buf_get_name(buf)
+    --                     local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
+    --                     local line_count = vim.api.nvim_buf_line_count(buf)
+    --                     local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
+    --
+    --                     if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
+    --                         if #vim.api.nvim_list_tabpages() > 1 then
+    --                             pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
+    --                         end
+    --                     end
+    --                 end
+    --             end
+    --         end
+    --     end,
+    -- })
 
     -- Now source the session
-    vim.cmd("source " .. session_file)
+    vim.cmd("source " .. session_path)
+    local tree = require("nvim-tree.api").tree
+    local cwd = vim.fn.getcwd()
+    tree.open({path = cwd})
+    tree.change_root(cwd)
+    utils:write_as_mpack(saved_sessions_path, session_state)
     return true
 end
 
@@ -570,27 +614,11 @@ if is_native then
     vim.api.nvim_create_autocmd("VimLeavePre", {
         group = vim.api.nvim_create_augroup("SaveSession", { clear = true }),
         callback = function()
-            if vim.v.dying > 0 or not should_save_session_on_close then return end
-
-            local real_windows = 0
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-                local win_buf = vim.api.nvim_win_get_buf(win)
-                if vim.api.nvim_get_option_value("filetype", { buf = win_buf }) ~= "netrw" then
-                    real_windows = real_windows + 1
-                    break
-                end
-            end
-
-            if real_windows == 0 then
-                utils:log("The only window we have open is netrw, so we're not saving session")
-                return
-            end
+            if vim.v.dying > 0 then return end
 
             local ok, err = pcall(mksession)
 
-            utils:log("Saved session")
             if not ok then
-                utils:log("Something went wrong saving session")
                 vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
             end
         end,
@@ -602,10 +630,7 @@ if is_native then
         nested = true,
         once = true,
         callback = function()
-            -- 1. Check if Neovim was started with arguments (e.g., nvim file.txt)
-            -- If there are arguments, we probably don't want to overwrite them with a session.
             if vim.fn.argc() > 0 then
-                should_save_session_on_close = false
                 return
             end
 
@@ -749,13 +774,13 @@ vim.api.nvim_create_user_command("Tags",
 
 vim.api.nvim_create_user_command("Save",
     function(opts)
-        local session_path = opts.args ~= "" and opts.args or temp_session_path
+        local session_path = opts.args == "" and get_session_path() or opts.args
         local ok, err = pcall(mksession, session_path)
 
         if not ok then
             vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
         else
-            vim.notify(string.format("Saved a temporary session to %s", temp_session_path), vim.log.levels.INFO)
+            vim.notify(string.format("Saved session to %s", session_path), vim.log.levels.INFO)
         end
     end,
     {
@@ -763,26 +788,32 @@ vim.api.nvim_create_user_command("Save",
         complete = "file"
     })
 
--- Goes back to whatever we were editing before saving using :Save (or :Config)
--- Deletes the temporary session after running
-vim.api.nvim_create_user_command("Back",
-    function(opts)
-        should_save_session_on_close = true
-        local session_path = opts.args ~= "" and opts.args or temp_session_path
-        local ok, err = pcall(ldsession, session_path)
-        if not ok then
-            vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
-            return
-        end
-        local tree = require("nvim-tree.api").tree
-        local cwd = vim.fn.getcwd()
-        tree.open({path = cwd})
-        tree.change_root(cwd)
-    end,
-    {
-        nargs = "*",
-        complete = "file"
-    })
+vim.api.nvim_create_user_command("Back", function()
+    local ok, err = pcall(ldsession, nil, true)
+    if not ok then
+        vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
+        return
+    end
+end, {})
+
+vim.api.nvim_create_user_command("Load", function(opts)
+    opts.args = opts.args and opts.args:match("%s*(%S+)%s*") -- Somehow we're getting some cursed shit passed in here
+    local ok, err = pcall(ldsession, opts.args == "" and nil or opts.args)
+    if not ok then
+        vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
+        return
+    end
+end, { nargs = "*", complete = "file" })
+
+vim.api.nvim_create_user_command("Sessions", function()
+    local session_state = utils:read_mpack_file(saved_sessions_path)
+    if not session_state then vim.notify("No state file!"); return end
+    vim.notify(vim.inspect(session_state))
+end, {})
+
+vim.api.nvim_create_user_command("SessionsClear", function()
+    utils:delete_file(saved_sessions_path)
+end, {})
 
 vim.api.nvim_create_user_command("LspInstall",
     function()
@@ -814,10 +845,8 @@ vim.api.nvim_create_user_command("Logs",
 vim.api.nvim_create_user_command("Config",
     function()
         vim.cmd("Save")
-
-        local config_dir = vim.fn.stdpath("config")
-        vim.api.nvim_set_current_dir(config_dir)
-        vim.cmd("e init.lua")
+        local config_session = vim.fn.stdpath("config") .. "/Session.vim"
+        vim.cmd("Load " .. config_session)
     end, {})
 
 vim.api.nvim_create_user_command("ConfigSave",

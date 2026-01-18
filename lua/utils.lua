@@ -135,6 +135,44 @@ function M.ensure_dir_exists(self, path)
     vim.fn.mkdir(expanded, "p")
 end
 
+function M.read_entire_file(self, path)
+    local stat = vim.uv.fs_stat(path)
+    if stat == nil or stat.type ~= "file" then return end
+    local f = io.open(path, "r")
+    if not f then return nil end
+    local result = f:read("*a")
+    f:close()
+    return result
+end
+
+function M.write_as_mpack(self, path, content)
+    local f = io.open(path, "w")
+    if not f then return nil end
+    content = vim.mpack.encode(content)
+    f:write(content)
+    f:close()
+end
+
+function M.read_mpack_file(self, path)
+    local content = self:read_entire_file(path)
+    if not content then return nil end
+    return vim.mpack.decode(content)
+end
+
+function M.write_as_json(self, path, content)
+    local f = io.open(path, "w")
+    if not f then return nil end
+    content = vim.json.encode(content)
+    f:write(content)
+    f:close()
+end
+
+function M.read_json_file(self, path)
+    local content = self:read_entire_file(path)
+    if not content then return nil end
+    return vim.json.decode(content, {object=true,array=true})
+end
+
 function M.download(self, url, destination)
     assert(self._download, "Missing _download implementation")
     self:trace_enter()
