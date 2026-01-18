@@ -95,7 +95,7 @@ return {
         "seblyng/roslyn.nvim",
         dir = plugin_path("seblyng/roslyn.nvim"),
         dev = true,
-        ft = { "razor", "csharp" },
+        ft = { "razor", "csharp", "csproj", "sln" },
         config = function()
             if lsp_utils.roslyn.cmd then
                 vim.lsp.config("roslyn", {
@@ -129,7 +129,9 @@ return {
                 extension = {
                     razor = "razor",
                     cshtml = "razor",
-                    cs = "csharp"
+                    cs = "csharp",
+                    csproj = "csproj",
+                    sln = "sln"
                 },
             })
         end,
@@ -305,49 +307,6 @@ return {
             { "<C-S-p>", "<cmd>:Telescope commands<cr>", desc = "Telescope commands" },
         },
     },
-    -- This extension just adds too many headaches. It crashes nvim in massive directories
-    -- Nice in theory though
-    -- {
-    --     "nvim-telescope/telescope-file-browser.nvim",
-    --     dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
-    --     config = function()
-    --         local telescope = require("telescope")
-    --         telescope.setup({
-    --             extensions = {
-    --                 file_browser = {
-    --                     hijack_netrw = true,
-    --                     depth = false,
-    --                     respect_gitignore = true,
-    --                     grouped = true,
-    --                     hide_parent_dir = true,
-    --                     mappings = {
-    --                         i = {
-    --                             ["<C-k>"] = function(prompt_bufnr)
-    --                                 local action_set = require("telescope.actions.set")
-    --                                 action_set.shift_selection(prompt_bufnr, -10)
-    --                             end,
-    --                             ["<C-j>"] = function(prompt_bufnr)
-    --                                 local action_set = require("telescope.actions.set")
-    --                                 action_set.shift_selection(prompt_bufnr, 10)
-    --                             end,
-    --                         },
-    --                         n = {
-    --                             ["<C-k>"] = function(prompt_bufnr)
-    --                                 local action_set = require("telescope.actions.set")
-    --                                 action_set.shift_selection(prompt_bufnr, -10)
-    --                             end,
-    --                             ["<C-j>"] = function(prompt_bufnr)
-    --                                 local action_set = require("telescope.actions.set")
-    --                                 action_set.shift_selection(prompt_bufnr, 10)
-    --                             end,
-    --                         }
-    --                     }
-    --                 }
-    --             }
-    --         })
-    --         telescope.load_extension("file_browser")
-    --     end
-    -- },
     {
         "hrsh7th/nvim-cmp",
         dir = plugin_path("hrsh7th/nvim-cmp"),
