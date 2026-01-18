@@ -1,5 +1,3 @@
--- TODOS
--- Autocomplete
 -- ============= CONSTANTS =============
 local sysname = vim.loop.os_uname().sysname
 local is_windows = sysname == "Windows_NT"

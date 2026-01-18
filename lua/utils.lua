@@ -72,6 +72,20 @@ function M.interpolate(self, str, vars)
     end))
 end
 
+-- Note: don't modify the result and expect the base tables to change
+-- If there are key collisions, the first table passed will take priority
+function M.join_tables(self, ...)
+    local args = {...}
+    local result = {}
+    local indexer = function(table, key)
+        for _, t in pairs(args) do
+            if t[key] then return t[key] end
+        end
+    end
+    setmetatable(result, {__index = indexer})
+    return result
+end
+
 function M.system(self, ...)
     self:trace_enter()
     local args = { ... }
@@ -86,12 +100,29 @@ function M.system(self, ...)
     return true
 end
 
+function M.system_stdout(self, ...)
+    self:trace_enter()
+    local args = { ... }
+    local result = vim.system(args):wait()
+    if result.code ~= 0 then
+        self:trace_exit()
+        return nil
+    end
+    self:trace_exit()
+    return result.stdout
+end
+
 function M.relpath(self, ...)
     return vim.fs.joinpath(vim.fn.stdpath("data"), "lsps", unpack({ ... }))
 end
 
 function M.file_exists(self, path)
     return vim.uv.fs_stat(path) ~= nil
+end
+
+function M.delete_file(self, path)
+    vim.fs.rm(path, {recursive = true, force = true})
+    return true
 end
 
 function M.ensure_dir_exists(self, path)
@@ -103,7 +134,7 @@ function M.download(self, url, destination)
     assert(self._download, "Missing _download implementation")
     self:trace_enter()
     destination = self:relpath(destination)
-    if self:file_exists(destination) then return true end
+    self:delete_file(destination)
     self:ensure_dir_exists(destination)
     self:trace_exit()
     return self:_download(url, destination)
@@ -114,13 +145,24 @@ function M.unzip(self, file, destination)
     self:trace_enter()
     local src = self:relpath(file)
     local destination = self:relpath(destination)
-    if self:file_exists(destination) then
-        self:trace_exit()
-        return true
-    end
+    self:delete_file(destination)
     self:ensure_dir_exists(destination)
-    self:_unzip(src, destination)
+    local result = self:_unzip(src, destination)
     self:trace_exit()
+    return result
+end
+
+function M.http_get(self, url)
+    return self:_http_get(url)
+end
+
+function M.http_get_json(self, url)
+    local response = self:http_get(url)
+    if not response then return nil end
+    return vim.json.decode(
+        response,
+        { object = true, array = true }
+    )
 end
 
 -- OS Specific implementations
@@ -128,26 +170,44 @@ if M.is_windows then
     function M.pwsh(self, command)
         return self:system("powershell", "-Command", command)
     end
+    function M.pwsh_stdout(self, command)
+        return self:system_stdout("powershell", "-Command", command)
+    end
 
     function M._download(self, url, destination)
         return self:pwsh(string.format('Invoke-WebRequest -Uri "%s" -OutFile "%s"', url, destination))
     end
 
     function M._unzip(self, file, destination)
-        return self:pwsh(string.format('Expand-Archive -Path "%s" -DestinationPath "%s"', src, destination))
+        assert(file, "Missing an input file")
+        assert(destination, "Missing an output destination")
+        return self:pwsh(string.format(
+            'Expand-Archive -Path "%s" -DestinationPath "%s" -Force', file, destination
+        ))
+    end
+
+    function M._http_get(self, url)
+        return self:pwsh_stdout(string.format(
+            '(Invoke-WebRequest -Uri "%s" -UseBasicParsing).Content',
+            url
+        ))
     end
 end
 
 if M.is_linux or M.is_mac then
-    function M:_download(url, destination)
-        return self:system("curl", "-L", url, "-o", destination)
+    function M._download(self, url, destination)
+        return self:system("curl", "-sL", url, "-o", destination)
     end
 
-    function M:_unzip(src, destination)
+    function M._unzip(self, src, destination)
         self:trace_enter()
         local result = self:system("unzip", src, "-d", destination)
         self:trace_exit()
         return result
+    end
+
+    function M._http_get(self, url)
+        return self:system_stdout("curl", "-sL", url)
     end
 end
 

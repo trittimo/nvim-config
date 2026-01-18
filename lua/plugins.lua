@@ -1,4 +1,5 @@
 local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
+local lsp_utils = require("lsp_utils")
 return {
     {
         "nvim-tree/nvim-tree.lua",
@@ -80,122 +81,50 @@ return {
         "seblyng/roslyn.nvim",
         dir = plugin_path("seblyng/roslyn.nvim"),
         dev = true,
-        ft = { "cs", "razor" },
+        ft = { "cs", "razor", "csharp" },
         config = function()
-            vim.lsp.config("roslyn", {
-                cmd = cmd,
-                settings = {
-                    ["csharp|inlay_hints"] = {
-                        csharp_enable_inlay_hints_for_implicit_object_creation = true,
-                        csharp_enable_inlay_hints_for_implicit_variable_types = true,
-
-                        csharp_enable_inlay_hints_for_lambda_parameter_types = true,
-                        csharp_enable_inlay_hints_for_types = true,
-                        dotnet_enable_inlay_hints_for_indexer_parameters = true,
-                        dotnet_enable_inlay_hints_for_literal_parameters = true,
-                        dotnet_enable_inlay_hints_for_object_creation_parameters = true,
-                        dotnet_enable_inlay_hints_for_other_parameters = true,
-                        dotnet_enable_inlay_hints_for_parameters = true,
-                        dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
-                        dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
-                        dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
-                    },
-                    ["csharp|code_lens"] = {
-                        dotnet_enable_references_code_lens = true,
-                    },
-                },
-            })
+            if lsp_utils.roslyn.cmd then
+                vim.lsp.config("roslyn", {
+                    cmd = lsp_utils.roslyn:cmd(),
+                    filetypes = { "razor", "cs", "csharp" },
+                    settings = {
+                        ["csharp|inlay_hints"] = {
+                            csharp_enable_inlay_hints_for_implicit_object_creation = true,
+                            csharp_enable_inlay_hints_for_implicit_variable_types = true,
+                            csharp_enable_inlay_hints_for_lambda_parameter_types = true,
+                            csharp_enable_inlay_hints_for_types = true,
+                            dotnet_enable_inlay_hints_for_indexer_parameters = true,
+                            dotnet_enable_inlay_hints_for_literal_parameters = true,
+                            dotnet_enable_inlay_hints_for_object_creation_parameters = true,
+                            dotnet_enable_inlay_hints_for_other_parameters = true,
+                            dotnet_enable_inlay_hints_for_parameters = true,
+                            dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
+                            dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
+                            dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
+                        },
+                        ["csharp|code_lens"] = {
+                            dotnet_enable_references_code_lens = true,
+                        },
+                    }
+                })
+                vim.lsp.enable('roslyn')
+            end
         end,
         init = function()
             vim.filetype.add({
                 extension = {
                     razor = "razor",
                     cshtml = "razor",
+                    cs = "csharp"
                 },
             })
         end,
     },
-    -- Come back to this some day if it actually fucking works
-    -- {
-    --     "seblyng/roslyn.nvim",
-    --     ft = { "cs", "razor" },
-    --     dependencies = {
-    --         {
-    --             "tris203/rzls.nvim",
-    --             config = true,
-    --         },
-    --     },
-    --     config = function()
-    --         local roslyn_base_path = vim.fs.joinpath(
-    --             vim.fn.stdpath("data"),
-    --             "roslyn",
-    --             "artifacts",
-    --             "bin",
-    --             "Microsoft.CodeAnalysis.LanguageServer",
-    --             "Release",
-    --             "net9.0"
-    --         )
-    --         local rzls_base_path = vim.fs.joinpath(
-    --             vim.fn.stdpath("data"),
-    --             "razor",
-    --             "artifacts",
-    --             "bin",
-    --             "Microsoft.CodeAnalysis.Razor.Compiler",
-    --             "Release",
-    --             "net9.0"
-    --         )
-    --
-    --         local cmd = {
-    --             "dotnet",
-    --             vim.fs.joinpath(roslyn_base_path, "Microsoft.CodeAnalysis.LanguageServer.dll"),
-    --             "--stdio",
-    --             "--logLevel=Information",
-    --             "--extensionLogDirectory=" .. vim.fs.dirname(vim.lsp.get_log_path()),
-    --             "--razorSourceGenerator=" .. vim.fs.joinpath(rzls_base_path, "Microsoft.CodeAnalysis.Razor.Compiler.dll"),
-    --             "--razorDesignTimePath="
-    --                 .. vim.fs.joinpath(rzls_base_path, "Targets", "Microsoft.NET.Sdk.Razor.DesignTime.targets"),
-    --         }
-    --
-    --         vim.lsp.config("roslyn", {
-    --             cmd = cmd,
-    --             handlers = require("rzls.roslyn_handlers"),
-    --             settings = {
-    --                 ["csharp|inlay_hints"] = {
-    --                     csharp_enable_inlay_hints_for_implicit_object_creation = true,
-    --                     csharp_enable_inlay_hints_for_implicit_variable_types = true,
-    --
-    --                     csharp_enable_inlay_hints_for_lambda_parameter_types = true,
-    --                     csharp_enable_inlay_hints_for_types = true,
-    --                     dotnet_enable_inlay_hints_for_indexer_parameters = true,
-    --                     dotnet_enable_inlay_hints_for_literal_parameters = true,
-    --                     dotnet_enable_inlay_hints_for_object_creation_parameters = true,
-    --                     dotnet_enable_inlay_hints_for_other_parameters = true,
-    --                     dotnet_enable_inlay_hints_for_parameters = true,
-    --                     dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
-    --                     dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
-    --                     dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
-    --                 },
-    --                 ["csharp|code_lens"] = {
-    --                     dotnet_enable_references_code_lens = true,
-    --                 },
-    --             },
-    --         })
-    --     end,
-    --     init = function()
-    --         vim.filetype.add({
-    --             extension = {
-    --                 razor = "razor",
-    --                 cshtml = "razor",
-    --             },
-    --         })
-    --     end,
-    -- },
     {
         "neovim/nvim-lspconfig",
         dir = plugin_path("neovim/nvim-lspconfig"),
         dev = true,
         config = function()
-            local lsp_utils = require("lsp_utils")
             vim.lsp.config('rust_analyzer', {
                 -- Server-specific settings. See `:help lspconfig-setup`
                 settings = {
@@ -267,7 +196,6 @@ return {
             vim.lsp.enable('rust_analyzer')
             vim.lsp.enable('ts_ls')
             vim.lsp.enable('rust_analyzer')
-            vim.lsp.enable('roslyn')
             vim.lsp.enable('html')
             vim.lsp.enable('cpp')
             vim.lsp.enable('clangd')
