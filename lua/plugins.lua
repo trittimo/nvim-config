@@ -342,10 +342,13 @@ return {
         end
     },
     {
+        -- Causes me headaches in a lot of buffers
+        -- Might revisit at some point
         "shrynx/line-numbers.nvim",
         dir = plugin_path("shrynx/line-numbers.nvim"),
         dev = true,
         opts = {},
+        enabled = false
     },
     {
         "junegunn/fzf",

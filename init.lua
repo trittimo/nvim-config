@@ -19,13 +19,24 @@ local function toggle_buffer(settings)
     if settings.win and -- We have saved a window
         vim.api.nvim_win_is_valid(settings.win) -- It's still valid
     then
-        if vim.api.nvim_get_current_win() == settings.win then -- It's currently active
+        local current_buf = vim.api.nvim_get_current_buf()
+        local current_win = vim.api.nvim_get_current_win()
+        if current_buf == settings.buf and current_win == settings.win then
+            if settings.close then return settings.close() end
             vim.api.nvim_win_close(settings.win, {})
         else -- Not active
             vim.api.nvim_set_current_win(settings.win) -- Activate it
         end
         return
     end
+
+    vim.api.nvim_create_autocmd("BufEnter", {
+        once = true,
+        callback = function()
+            settings.win = vim.api.nvim_get_current_win()
+            settings.buf = vim.api.nvim_get_current_buf()
+        end
+    })
 
     if settings.buf and vim.api.nvim_buf_is_valid(settings.buf) and settings.restore then
         -- We found a buffer to restore and we have a restore fn, call it
@@ -34,8 +45,6 @@ local function toggle_buffer(settings)
         -- No way to restore, just start
         settings.start()
     end
-    settings.win = vim.api.nvim_get_current_win()
-    settings.buf = vim.api.nvim_get_current_buf()
 end
 
 local function should_skip(bufnr)
@@ -530,7 +539,10 @@ if is_native then
         -- No need for a restore. The start function will restore it
         start = function()
             vim.cmd("NvimTreeToggle")
-        end
+        end,
+        close = function()
+            vim.cmd("NvimTreeClose")
+        end,
     }
 
     vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
