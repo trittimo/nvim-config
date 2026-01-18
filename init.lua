@@ -213,6 +213,8 @@ if is_native then
         vim.opt.grepformat = "%f:%l:%c:%m"
     end
 
+    vim.cmd("helptags ALL")
+
     -- Use 4 spaces for tab
     vim.opt.tabstop = 4
     vim.opt.shiftwidth = 4
@@ -687,36 +689,54 @@ elseif is_windows or is_linux then
 end
 
 -- ============= COMMANDS =============
--- Create a temporary save (not using the global session)
 vim.api.nvim_create_user_command("Cd",
     function(opts)
-        for i, bufn in pairs(vim.api.nvim_list_bufs()) do
-            local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
+        local navpath = vim.fn.expand(opts.args)
+        if not utils:directory_exists(navpath) then
+            vim.notify(string.format("Directory does not exist: '%s'", navpath))
+            return
+        end
+        vim.cmd("Save") -- Create a temporary session we can get back to if things don't work out
+        local tree = require("nvim-tree.api").tree
+        tree.open({path = navpath})
+        tree.change_root(navpath)
+
+        -- Close every buffer except tree
+        local tree_bufn = vim.api.nvim_get_current_buf()
+        for _, bufn in pairs(vim.api.nvim_list_bufs()) do
             local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
-            if filetype == "netrw" or buftype == "terminal" then
+            if bufn ~= tree_bufn and (
+                buftype == "terminal" or
+                buftype == "nofile" or
+                buftype == "help"
+            )
+            then
+                -- We can happily force close terinals and files which aren't real
                 local ok, err = pcall(vim.api.nvim_buf_delete, bufn, {force = true})
                 if not ok then
+                    vim.notify(string.format("Cannot force close one of the open buffers, will not attempt to cd: %s", err), vim.log.levels.ERROR)
+                    return
+                end
+            elseif bufn ~= tree_bufn then
+                -- Can't force close these guys
+                local ok, err = pcall(vim.api.nvim_buf_delete, bufn, {force = false})
+                if not ok then
                     vim.notify(string.format("Cannot close one of the open buffers, will not attempt to cd: %s", err), vim.log.levels.ERROR)
-                    return false
+                    return
                 end
             end
         end
-        local ok, err = pcall(vim.cmd, "cd " .. vim.fn.expand(opts.args))
+        local ok, err = pcall(vim.cmd, "cd " .. navpath)
         if not ok then
             vim.notify(string.format("Cannot navigate to path: %s", err), vim.log.levels.ERROR)
-            return false
+            return
         end
 
-        local ok, err = pcall(vim.cmd, "bufdo bwipeout")
-        if not ok then
-            vim.notify(string.format("Cannot close open buffers after changing directory: %s", err), vim.log.levels.ERROR)
-            return false
-        end
         return true
     end,
     {
         nargs = 1,
-        complete = "file"
+        complete = "dir"
     })
 
 -- Create a temporary save (not using the global session)
@@ -752,7 +772,12 @@ vim.api.nvim_create_user_command("Back",
         local ok, err = pcall(ldsession, session_path)
         if not ok then
             vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
+            return
         end
+        local tree = require("nvim-tree.api").tree
+        local cwd = vim.fn.getcwd()
+        tree.open({path = cwd})
+        tree.change_root(cwd)
     end,
     {
         nargs = "*",

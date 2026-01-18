@@ -116,6 +116,11 @@ function M.relpath(self, ...)
     return vim.fs.joinpath(vim.fn.stdpath("data"), "lsps", unpack({ ... }))
 end
 
+function M.directory_exists(self, path)
+    local result = vim.uv.fs_stat(path)
+    return result ~= nil and result.type == "directory"
+end
+
 function M.file_exists(self, path)
     return vim.uv.fs_stat(path) ~= nil
 end
