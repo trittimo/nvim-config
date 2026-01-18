@@ -6,6 +6,24 @@ return {
         dir = plugin_path("nvim-tree/nvim-tree.lua"),
         dev = true,
         opts = {
+            on_attach = function(bufnr)
+                -- :help nvim-tree-api
+                local api = require("nvim-tree.api")
+                local function prev_node()
+                    -- local curr_node = api.tree.get_node_under_cursor()
+                    api.node.navigate.sibling.prev()
+                    api.node.navigate.sibling.prev()
+                    api.node.navigate.sibling.prev()
+                end
+                local function next_node()
+                    api.node.navigate.sibling.next()
+                    api.node.navigate.sibling.next()
+                    api.node.navigate.sibling.next()
+                end
+                api.config.mappings.default_on_attach(bufnr)
+                vim.keymap.set("n", "<C-k>", prev_node, {buffer = bufnr, noremap = true, silent = true, nowait = true})
+                vim.keymap.set("n", "<C-j>", next_node, {buffer = bufnr, noremap = true, silent = true, nowait = true})
+            end
         }
     },
     {
@@ -141,6 +159,14 @@ return {
         dir = plugin_path("neovim/nvim-lspconfig"),
         dev = true,
         config = function()
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
+            capabilities.textDocument.completion.completionItem.snippetSupport = true
+            -- Requires running `npm i -g vscode-langservers-extracted`
+            vim.lsp.config("html", {
+                capabilities = capabilities,
+                cmd = { "vscode-html-language-server", "--stdio" }
+            })
+
             vim.lsp.config('rust_analyzer', {
                 -- Server-specific settings. See `:help lspconfig-setup`
                 settings = {
@@ -211,7 +237,7 @@ return {
 
             vim.lsp.enable('rust_analyzer')
             -- vim.lsp.enable('ts_ls')
-            -- vim.lsp.enable('html')
+            vim.lsp.enable('html')
             vim.lsp.enable('clangd')
             vim.lsp.enable('lua_ls')
 

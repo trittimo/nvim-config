@@ -202,6 +202,11 @@ vim.g.loaded_netrwPlugin = 1
 vim.opt.termguicolors = true
 
 if is_native then
+    -- Make sure we aren't folding anything by default when opening a file
+    vim.opt.foldlevel = 99
+    vim.opt.foldlevelstart = 99
+
+    vim.cmd("cnoreabbrev grep Grep") -- see ya grep
     -- Use ripgrep for searching
     if vim.fn.executable("rg") == 1 then
         vim.opt.grepprg = "rg --vimgrep --context 2 --smart-case"
@@ -225,25 +230,12 @@ if is_native then
         -- You can find the pattern of a buffer with :set filetype?
         pattern = "qf",
         callback = function()
-            -- Move quickfix to the bottom and set height
+            -- Move quickfix to the right
             vim.cmd("wincmd L")
-            vim.cmd("vert resize 90")
             -- Allow quitting out of a copen buffer with q
             vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd<CR>", { noremap = true, silent = true, nowait = true})
         end
     })
-
-    -- When performing a search via :grep, automatically run :copen
-    vim.api.nvim_create_autocmd("QuickFixCmdPost", {
-        pattern = "grep",
-        callback = function()
-            -- Could also use 'cwindow' if we only wanted to open the results window when there are actually results
-            vim.cmd("copen")
-            -- Clear the highlight
-            vim.cmd("nohlsearch")
-        end
-    })
-
 end
 
 -- ============= PLUGINS =============
@@ -852,7 +844,15 @@ vim.api.nvim_create_user_command("ConfigSave",
 if is_native then
     vim.api.nvim_create_user_command("Grep", function(opts)
         -- Run grep silently (fills quickfix list)
-        vim.cmd("silent grep! " .. opts.args)
+        local ok, err = pcall(vim.cmd, "silent grep! " .. opts.args)
+        if ok then
+            if #vim.fn.getqflist() <= 0 then return end
+            vim.cmd("copen")
+            -- Clear the highlight
+            vim.cmd("nohlsearch")
+        else
+            vim.notify(string.format("Error occurred calling rg: %s", err), vim.log.levels.ERROR)
+        end
     end, { nargs = "+", complete = "file" })
 
     vim.api.nvim_create_user_command('Wrap', function()
