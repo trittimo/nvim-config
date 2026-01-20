@@ -243,6 +243,8 @@ vim.opt.timeoutlen = 300
 vim.opt.sessionoptions = "buffers,curdir,folds,tabpages,winsize"
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_python3_provider = 0
 vim.opt.termguicolors = true
 
 if is_native then

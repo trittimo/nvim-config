@@ -2,38 +2,17 @@ local utils = require("utils")("lsp_utils.log")
 
 local M = {}
 M.setup = function(self)
-    for name, config in pairs(self) do
-        if type(config) == "table" and config.check and not config:check() then
-            vim.notify("Setting up " .. name)
-            config:setup()
-        end
-    end
+    print("Just call =require('lsp_utils'):thelsp:setup()")
+    return true
+end
+M.bin_path = function(self, lsp)
+    return utils:relpath(utils:interpolate(lsp.unpack_path, lsp))
+end
+M.check = function(self, lsp_name)
+    if not self[lsp_name] then return false end
+    return utils:file_exists(self:bin_path(self[lsp_name]))
 end
 
-setmetatable(M, {__newindex = function(tbl, key, base)
-    if type(base) == "table" then
-        local lsp_default_fns = {
-            bin_path = function(self)
-                return utils:relpath(utils:interpolate(self.unpack_path, self))
-            end,
-            check = function(self)
-                return utils:file_exists(self:bin_path())
-            end
-        }
-        setmetatable(lsp_default_fns, {__index = function(_, k)
-            if k == "cmd" then
-                -- Don't expose the cmd() function unless the LSP is installed
-                if lsp_default_fns:check() then
-                    lsp_default_fns.cmd = base.cmd
-                end
-                return base.cmd
-            else
-                return base[k]
-            end
-        end})
-        rawset(tbl, key, lsp_default_fns)
-    end
-end})
 
 M.clangd = {
     version = "21.1.8",
@@ -59,7 +38,7 @@ end
 
 function M.clangd.cmd(self)
     return {
-        self:bin_path(),
+        M:bin_path(self),
         "--clang-tidy",
         "--background-index",
         "--offset-encoding=utf-8",
@@ -82,7 +61,7 @@ M.roslyn = {
 function M.roslyn.cmd(self)
     return {
         "dotnet",
-        self:bin_path(utils:interpolate(self.unpack_path, self)),
+        M:bin_path(self),
         '--logLevel',
         'Information',
         '--extensionLogDirectory',
@@ -109,6 +88,22 @@ function M.roslyn.setup(self)
         vim.notify("Failed to unzip nupkg", vim.log.levels.ERROR)
         return false
     end
+end
+
+M.lua = {
+    unpack_path = "lua/unpacked/bin/$(binary_name)",
+    binary_name = (utils.is_windows and "lua-language-server.exe" or "lua-language-server")
+}
+
+function M.lua.cmd(self)
+    return {
+        M:bin_path(self)
+    }
+end
+
+function M.lua.setup(self)
+    print("Not implemented!")
+    return false
 end
 
 return M
