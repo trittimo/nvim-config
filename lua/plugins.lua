@@ -104,26 +104,6 @@ return {
         },
     },
     {
-        "hrsh7th/cmp-nvim-lsp",
-        lazy = true,
-        dir = plugin_path("hrsh7th/cmp-nvim-lsp"),
-        dev = true
-    },
-    {
-        "hrsh7th/cmp-buffer",
-        lazy = true,
-        dir = plugin_path("hrsh7th/cmp-buffer"),
-        dev = true
-
-    },
-    {
-        "hrsh7th/cmp-path",
-        lazy = true,
-        dir = plugin_path("hrsh7th/cmp-path"),
-        dev = true
-
-    },
-    {
         "nvim-lua/plenary.nvim",
         lazy = true,
         dir = plugin_path("nvim-lua/plenary.nvim"),
@@ -398,40 +378,28 @@ return {
         },
     },
     {
-        "hrsh7th/nvim-cmp",
-        dir = plugin_path("hrsh7th/nvim-cmp"),
+        "saghen/blink.cmp",
+        dir = plugin_path("saghen/blink.cmp"),
+        build = "cargo build --release",
         dev = true,
-        opts = function()
-            local cmp = require("cmp")
-            return {
-                snippet = {
-                    expand = function(args)
-                        vim.snippet.expand(args.body)
-                    end
-                },
-                mapping = cmp.mapping.preset.insert({
-                    ['<C-S-j>'] = cmp.mapping.scroll_docs(-4),
-                    ['<C-S-k>'] = cmp.mapping.scroll_docs(4),
-                    ['<C-Space>'] = cmp.mapping.complete(),
-                    ['<C-e>'] = cmp.mapping.abort(),
-                    ["<C-j>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
-                    ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
-                    -- Accept currently selected item.
-                    -- Set `select` to `false` to only confirm explicitly selected items.
-                    ['<Tab>'] = cmp.mapping.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert }),
-                }),
-                experimental = {
-                    ghost_text = true,
-                },
-                sources = {
-                    { name = "nvim_lsp" },
-                    { name = "path" },
-                    { name = "buffer" },
-                    { name = "nvim_lsp:lua_ls" },
-                    { name = "Dadbod" }
-                },
-            }
-        end
+        opts_extend = { "sources.default" },
+        opts = {
+            keymap = {
+                preset = "none",
+                ["<C-space>"] = { function(cmp) cmp.show({ providers = { "snippets" } }) end },
+                ["<C-e>"] = { "hide", "fallback" },
+                ["<S-k>"] = { "show_signature", "show_documentation", "hide_signature", "fallback" },
+                ["<C-k>"] = { "select_prev", "fallback" },
+                ["<C-j>"] = { "select_next", "fallback" },
+                ["<C-S-k>"] = { "scroll_documentation_up", "fallback" },
+                ["<C-S-j>"] = { "scroll_documentation_down", "fallback" },
+                ["<Tab>"] = { "accept", "fallback" }
+            },
+            sources = {
+                default = { "lsp", "path", "snippets", "buffer" }
+            },
+            fuzzy = { implementation = "rust" }
+        }
     },
     {
         -- Causes me headaches in a lot of buffers
