@@ -3,7 +3,7 @@ local M = {
     trace_enabled = false
 }
 
-M.sysname = vim.loop.os_uname().sysname
+M.sysname = vim.uv.os_uname().sysname
 M.is_windows = M.sysname == "Windows_NT"
 M.is_linux = M.sysname == "Linux"
 M.is_mac = M.sysname == "Darwin"
@@ -68,7 +68,7 @@ end
 -- Usage:  M:interpolate("Hello $(name)", {name = 'Mike'})
 function M.interpolate(self, str, vars)
     return (str:gsub("%$%(([%w_]+)%)", function(key)
-        return tostring(vars[key] or "$(" .. key .. ")")
+        return tostring(vars[key] or ("$(" .. key .. ")"))
     end))
 end
 
@@ -117,11 +117,13 @@ function M.relpath(self, ...)
 end
 
 function M.directory_exists(self, path)
+---@diagnostic disable-next-line: undefined-field
     local result = vim.uv.fs_stat(path)
     return result ~= nil and result.type == "directory"
 end
 
 function M.file_exists(self, path)
+---@diagnostic disable-next-line: undefined-field
     return vim.uv.fs_stat(path) ~= nil
 end
 

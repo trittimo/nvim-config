@@ -27,6 +27,39 @@ return {
         }
     },
     {
+        "tpope/vim-dadbod",
+        lazy = true,
+        dir = plugin_path("tpope/vim-dadbod"),
+        dev = true,
+        opts = {
+        }
+    },
+    {
+        "kristijanhusak/vim-dadbod-completion",
+        lazy = true,
+        dir = plugin_path("kristijanhusak/vim-dadbod-completion"),
+        dev = true,
+        ft = { "sql", "mysql", "plsql" },
+        opts = {
+        }
+    },
+    {
+        "kristijanhusak/vim-dadbod-ui",
+        dir = plugin_path("kristijanhusak/vim-dadbod-ui"),
+        dev = true,
+        dependencies = {
+            { "tpope/vim-dadbod" },
+            { "kristijanhusak/vim-dadbod-completion" },
+        },
+        ft = { "sql", "mysql", "plsql" },
+        cmd = {
+            "DBUI",
+            "DBUIToggle",
+            "DBUIAddConnection",
+            "DBUIFindBuffer",
+        },
+    },
+    {
         "hrsh7th/cmp-nvim-lsp",
         dir = plugin_path("hrsh7th/cmp-nvim-lsp"),
         dev = true
@@ -253,7 +286,8 @@ return {
                         print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
                     end, opts)
                     vim.keymap.set('n', '<F2>', vim.lsp.buf.rename, opts)
-                    vim.keymap.set({'n','v','i'}, '<C-,>', vim.lsp.buf.code_action, opts)
+                    vim.keymap.set({'n','v','i'}, '<C-.>', vim.lsp.buf.code_action, opts)
+                    vim.keymap.set({'n','v','i'}, '<C-,>', vim.diagnostic.open_float, opts)
                     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
                 end,
             })
@@ -356,7 +390,9 @@ return {
                 sources = {
                     { name = "nvim_lsp" },
                     { name = "path" },
-                    { name = "buffer" }
+                    { name = "buffer" },
+                    { name = "nvim_lsp:lua_ls" },
+                    { name = "Dadbod" }
                 },
             }
         end

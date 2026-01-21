@@ -557,8 +557,8 @@ if is_native then
 
     -- See `:help vim.diagnostic.*` for documentation on any of the below functions
     vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
-    vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
-    vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+    vim.keymap.set("n", "[d", function() vim.diagnostic.goto_diagnostic(vim.diagnostic.get_prev()) end)
+    vim.keymap.set("n", "]d", function() vim.diagnostic.goto_diagnostic(vim.diagnostic.get_next()) end)
     vim.keymap.set("n", "<C-l>", "<cmd>:tabnext<CR>")
     vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
