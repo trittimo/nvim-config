@@ -1,29 +1,72 @@
 local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
+local utils = require("utils")("plugins.log")
 local lsp_utils = require("lsp_utils")
+
+-- https://github.com/nvim-treesitter/nvim-treesitter/blob/main/SUPPORTED_LANGUAGES.md
+local treesitter_languages = { -- Map the treesitter name -> filetype
+    lua = "lua",
+    python = "python",
+    javascript = "javascript",
+    bash = "bash",
+    cpp = "cpp",
+    c = "c",
+    rust = "rust",
+    c_sharp = "csharp",
+    sql = "sql",
+    razor = "razor",
+    html = "html",
+}
+local lsp_filetypes = {
+    "html",
+    "rust",
+    "lua",
+    "ccp",
+    "javascript"
+}
+local treesitter_filetypes = {}
+for _,v in pairs(treesitter_languages) do table.insert(treesitter_filetypes, v) end
+
 return {
     {
+        "trittimo/file-gui",
+        lazy = true,
+        dir = plugin_path("trittimo/file-gui"),
+        dev = true,
+        opts = {},
+        keys = {
+            { "<C-M-o>", function() require("file-gui"):select_folder() end }
+        }
+    },
+    {
         "nvim-tree/nvim-tree.lua",
+        lazy = true,
         dir = plugin_path("nvim-tree/nvim-tree.lua"),
         dev = true,
         opts = {
             on_attach = function(bufnr)
                 -- :help nvim-tree-api
                 local api = require("nvim-tree.api")
-                local function prev_node()
-                    -- local curr_node = api.tree.get_node_under_cursor()
-                    api.node.navigate.sibling.prev()
-                    api.node.navigate.sibling.prev()
-                    api.node.navigate.sibling.prev()
-                end
-                local function next_node()
-                    api.node.navigate.sibling.next()
-                    api.node.navigate.sibling.next()
-                    api.node.navigate.sibling.next()
+                local function delete_file()
+                    api.fs.trash(api.tree.get_node_under_cursor())
                 end
                 api.config.mappings.default_on_attach(bufnr)
-                vim.keymap.set("n", "<C-k>", prev_node, {buffer = bufnr, noremap = true, silent = true, nowait = true})
-                vim.keymap.set("n", "<C-j>", next_node, {buffer = bufnr, noremap = true, silent = true, nowait = true})
-            end
+                vim.keymap.set("n", "<C-k>", "3k", {buffer = bufnr, noremap = true, silent = true, nowait = true})
+                vim.keymap.set("n", "<C-j>", "3j", {buffer = bufnr, noremap = true, silent = true, nowait = true})
+                vim.keymap.set("n", "<C-d>", delete_file, {buffer = bufnr, noremap = true, silent = true, nowait = true})
+            end,
+            trash = {
+                cmd = utils.is_windows and "Remove-Item -Recurse" or "rm -rf"
+            }
+        },
+        cmd = {
+            "NvimTreeFindFileToggle",
+            "NvimTreeClipboard",
+            "NvimTreeFindFile",
+            "NvimTreeRefresh",
+            "NvimTreeFocus",
+            "NvimTreeToggle",
+            "NvimTreeClose",
+            "NvimTreeOpen"
         }
     },
     {
@@ -45,6 +88,7 @@ return {
     },
     {
         "kristijanhusak/vim-dadbod-ui",
+        lazy = true,
         dir = plugin_path("kristijanhusak/vim-dadbod-ui"),
         dev = true,
         dependencies = {
@@ -61,32 +105,36 @@ return {
     },
     {
         "hrsh7th/cmp-nvim-lsp",
+        lazy = true,
         dir = plugin_path("hrsh7th/cmp-nvim-lsp"),
         dev = true
     },
     {
         "hrsh7th/cmp-buffer",
+        lazy = true,
         dir = plugin_path("hrsh7th/cmp-buffer"),
         dev = true
 
     },
     {
         "hrsh7th/cmp-path",
+        lazy = true,
         dir = plugin_path("hrsh7th/cmp-path"),
         dev = true
 
     },
     {
         "nvim-lua/plenary.nvim",
+        lazy = true,
         dir = plugin_path("nvim-lua/plenary.nvim"),
         dev = true
 
     },
     {
 		"tinted-theming/tinted-vim",
+		lazy = false, -- load at start
         dir = plugin_path("tinted-theming/tinted-vim"),
         dev = true,
-		lazy = false, -- load at start
 		priority = 1000, -- load first
 		config = function()
             -- Opacity seemed like a cool idea but it's mostly distracting
@@ -100,10 +148,11 @@ return {
 	},
     {
         "nvim-treesitter/nvim-treesitter",
+        lazy = true,
         dir = plugin_path("nvim-treesitter/nvim-treesitter"),
         dev = true,
         build = ":TSUpdate",
-        lazy = false,
+        ft = treesitter_filetypes,
         config = function()
             local treesitter = require("nvim-treesitter")
             treesitter.setup({
@@ -111,26 +160,11 @@ return {
                 indent = { enable = true },
                 incremental_selection = { enable = true }
             })
-            -- https://github.com/nvim-treesitter/nvim-treesitter/blob/main/SUPPORTED_LANGUAGES.md
-            local languages = { -- Map the treesitter name -> filetype
-                lua = "lua",
-                python = "python",
-                javascript = "javascript",
-                bash = "bash",
-                cpp = "cpp",
-                c = "c",
-                rust = "rust",
-                c_sharp = "csharp",
-                sql = "sql",
-                razor = "razor",
-                html = "html",
-            }
-            local _tl = {}; for k,_ in pairs(languages) do table.insert(_tl, k) end
-            local _fl = {}; for _,v in pairs(languages) do table.insert(_fl, v) end
-            treesitter.install(_tl)
+            local treesitter_remote_names = {}; for k,_ in pairs(treesitter_languages) do table.insert(treesitter_remote_names, k) end
+            treesitter.install(treesitter_remote_names)
 
             vim.api.nvim_create_autocmd('FileType', {
-                pattern = _fl,
+                pattern = treesitter_filetypes,
                 callback = function()
                     vim.treesitter.start()
                     vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
@@ -144,6 +178,7 @@ return {
     },
     {
         "seblyng/roslyn.nvim",
+        lazy = true,
         dir = plugin_path("seblyng/roslyn.nvim"),
         dev = true,
         ft = { "razor", "csharp", "csproj", "sln" },
@@ -189,8 +224,9 @@ return {
     },
     {
         "neovim/nvim-lspconfig",
-        dir = plugin_path("neovim/nvim-lspconfig"),
         dev = true,
+        ft = lsp_filetypes,
+        dir = plugin_path("neovim/nvim-lspconfig"),
         config = function()
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities.textDocument.completion.completionItem.snippetSupport = true
@@ -408,14 +444,16 @@ return {
     },
     {
         "junegunn/fzf",
+        lazy = true,
         dir = plugin_path("junegunn/fzf"),
         dev = true
     },
     {
         "junegunn/fzf.vim",
+        lazy = true,
         dir = plugin_path("junegunn/fzf.vim"),
         dev = true,
-        cmd = { "Files", "FZF", "Rg", "Buffers" },
+        cmd = { "Files", "Fzf", "Rg", "Buffers" },
         init = function()
             -- Use fd for file listing (huge speed win)
             vim.env.FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"

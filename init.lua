@@ -7,7 +7,6 @@ local is_neovide = vim.g.neovide
 local is_vscode = vim.g.vscode
 local is_embedded = is_vscode
 local is_native = not is_embedded
-local log_level = nil
 local saved_sessions_path = vim.fn.stdpath("state") .. "/sessions.mpack"
 local max_saved_sessions = 10
 local max_whitespace_highlight_filesize = 1024 * 1024 -- 1MB
@@ -23,7 +22,7 @@ local function toggle_buffer(settings)
         local current_win = vim.api.nvim_get_current_win()
         if current_buf == settings.buf and current_win == settings.win then
             if settings.close then return settings.close() end
-            vim.api.nvim_win_close(settings.win, {})
+            vim.api.nvim_win_close(settings.win, true)
         else -- Not active
             vim.api.nvim_set_current_win(settings.win) -- Activate it
         end
@@ -63,7 +62,7 @@ local function should_skip(bufnr)
         return true
     end
 
-    local stat = vim.loop.fs_stat(name)
+    local stat = vim.uv.fs_stat(name)
     if stat and stat.size > max_whitespace_highlight_filesize then
         return true
     end
@@ -187,34 +186,6 @@ local function ldsession(session_file, go_previous)
     end
     utils:log("Found session path to load: " .. session_path)
 
-    -- vim.api.nvim_create_autocmd("SessionLoadPost", {
-    --     once = true,
-    --     callback = function()
-    --         -- Clean up any empty tabs
-    --         local tabs = vim.api.nvim_list_tabpages()
-    --         for i = #tabs, 1, -1 do
-    --             local tab = tabs[i]
-    --             if vim.api.nvim_tabpage_is_valid(tab) then
-    --                 local wins = vim.api.nvim_tabpage_list_wins(tab)
-    --
-    --                 if #wins == 1 then
-    --                     local buf = vim.api.nvim_win_get_buf(wins[1])
-    --                     local buf_name = vim.api.nvim_buf_get_name(buf)
-    --                     local buf_changed = vim.api.nvim_get_option_value("modified", { buf = buf })
-    --                     local line_count = vim.api.nvim_buf_line_count(buf)
-    --                     local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or ""
-    --
-    --                     if buf_name == "" and not buf_changed and line_count == 1 and first_line == "" then
-    --                         if #vim.api.nvim_list_tabpages() > 1 then
-    --                             pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(tab))
-    --                         end
-    --                     end
-    --                 end
-    --             end
-    --         end
-    --     end,
-    -- })
-
     -- Now source the session
     vim.cmd("source " .. session_path)
     local tree = require("nvim-tree.api").tree
@@ -227,6 +198,10 @@ end
 
 utils:log("=============================")
 -- ============= MISC =============
+-- nvim-tree advises we do this ASAP in our init
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- Spacebar is our leader key
 vim.g.mapleader = " "
 
@@ -241,8 +216,6 @@ vim.opt.linebreak = true
 vim.opt.timeoutlen = 300
 -- Defaults are "blank,buffers,curdir,folds,help,tabpages,winsize,terminal"
 vim.opt.sessionoptions = "buffers,curdir,folds,tabpages,winsize"
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_python3_provider = 0
 vim.opt.termguicolors = true
@@ -308,6 +281,7 @@ if is_native then
             enabled = false
         },
         state = vim.fn.stdpath("state") .. "/lazy/state.json",
+        ---@diagnostic disable-next-line: assign-type-mismatch
         dev = {
             path = vim.fn.stdpath("config") .. "/plugins",
             fallback = false
@@ -557,8 +531,9 @@ if is_native then
 
     -- See `:help vim.diagnostic.*` for documentation on any of the below functions
     vim.keymap.set("n", "<C-.>", vim.diagnostic.open_float)
-    vim.keymap.set("n", "[d", function() vim.diagnostic.goto_diagnostic(vim.diagnostic.get_prev()) end)
-    vim.keymap.set("n", "]d", function() vim.diagnostic.goto_diagnostic(vim.diagnostic.get_next()) end)
+
+    vim.keymap.set("n", "[d", function() vim.diagnostic.goto_prev() end)
+    vim.keymap.set("n", "]d", function() vim.diagnostic.goto_next() end)
     vim.keymap.set("n", "<C-l>", "<cmd>:tabnext<CR>")
     vim.keymap.set("n", "<C-h>", "<cmd>:tabprev<CR>")
 
@@ -578,10 +553,10 @@ if is_native then
     local vim_tree_settings = {
         -- No need for a restore. The start function will restore it
         start = function()
-            vim.cmd("NvimTreeToggle")
+            vim.cmd("NvimTreeFindFileToggle")
         end,
         close = function()
-            vim.cmd("NvimTreeClose")
+            vim.cmd("NvimTreeFindFileToggle")
         end,
     }
 
@@ -613,35 +588,35 @@ if is_native then
     })
 
     -- Auto create session if we're quitting and didn't start with arguments
-    vim.api.nvim_create_autocmd("VimLeavePre", {
-        group = vim.api.nvim_create_augroup("SaveSession", { clear = true }),
-        callback = function()
-            if vim.v.dying > 0 then return end
-
-            local ok, err = pcall(mksession)
-
-            if not ok then
-                vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
-            end
-        end,
-    })
+    -- vim.api.nvim_create_autocmd("VimLeavePre", {
+    --     group = vim.api.nvim_create_augroup("SaveSession", { clear = true }),
+    --     callback = function()
+    --         if vim.v.dying > 0 then return end
+    --
+    --         local ok, err = pcall(mksession)
+    --
+    --         if not ok then
+    --             vim.notify(string.format("Failed to save session: %s", err), vim.log.levels.ERROR)
+    --         end
+    --     end,
+    -- })
 
     -- Auto restore session if it exists
-    vim.api.nvim_create_autocmd("VimEnter", {
-        group = vim.api.nvim_create_augroup("RestoreSession", { clear = true }),
-        nested = true,
-        once = true,
-        callback = function()
-            if vim.fn.argc() > 0 then
-                return
-            end
-
-            local ok, err = pcall(ldsession)
-            if not ok then
-                vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
-            end
-        end,
-    })
+    -- vim.api.nvim_create_autocmd("VimEnter", {
+    --     group = vim.api.nvim_create_augroup("RestoreSession", { clear = true }),
+    --     nested = true,
+    --     once = true,
+    --     callback = function()
+    --         if vim.fn.argc() > 0 then
+    --             return
+    --         end
+    --
+    --         local ok, err = pcall(ldsession)
+    --         if not ok then
+    --             vim.notify(string.format("Failed to load session: %s", err), vim.log.levels.ERROR)
+    --         end
+    --     end,
+    -- })
 
     if is_mac then
         vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(vim_tree_settings) end)

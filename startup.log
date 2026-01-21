@@ -1,0 +1,200 @@
+--- Startup times for process: Primary (or UI client) ---
+
+times in msec
+ clock   self+sourced   self:  sourced script
+ clock   elapsed:              other lines
+
+000.025  000.025: --- NVIM STARTING ---
+000.264  000.239: event init
+000.608  000.343: early init
+017.097  016.489: locale set
+017.170  000.074: init first window
+018.493  001.322: inits 1
+019.145  000.652: window checked
+019.169  000.024: parsing arguments
+021.906  000.457  000.457: require('vim.shared')
+022.648  000.186  000.186: require('vim.inspect')
+023.010  000.339  000.339: require('vim._options')
+023.026  001.093  000.569: require('vim._editor')
+023.033  001.716  000.165: require('vim._init_packages')
+023.113  002.228: init lua interpreter
+038.310  015.198: nvim_ui_attach
+038.689  000.378: nvim_set_client_info
+038.698  000.010: --- NVIM STARTED ---
+
+--- Startup times for process: Embedded ---
+
+times in msec
+ clock   self+sourced   self:  sourced script
+ clock   elapsed:              other lines
+
+000.004  000.004: --- NVIM STARTING ---
+000.034  000.031: event init
+000.109  000.075: early init
+015.770  015.661: locale set
+015.815  000.044: init first window
+016.225  000.410: inits 1
+016.369  000.144: window checked
+016.378  000.009: parsing arguments
+017.518  000.346  000.346: require('vim.shared')
+018.151  000.172  000.172: require('vim.inspect')
+018.413  000.249  000.249: require('vim._options')
+018.417  000.892  000.471: require('vim._editor')
+018.420  001.335  000.097: require('vim._init_packages')
+018.433  000.720: init lua interpreter
+019.100  000.668: expanding arguments
+019.125  000.024: inits 2
+019.403  000.278: init highlight
+019.405  000.002: waiting for UI
+019.596  000.191: done waiting for UI
+019.607  000.011: clear screen
+020.371  000.048  000.048: require('vim.keymap')
+021.422  000.277  000.277: sourcing nvim_exec2()
+026.134  006.523  006.198: require('vim._defaults')
+026.143  000.012: init default mappings & autocommands
+026.854  000.093  000.093: sourcing C:\Program Files\Neovim\share\nvim\runtime\ftplugin.vim
+027.018  000.046  000.046: sourcing C:\Program Files\Neovim\share\nvim\runtime\indent.vim
+028.195  000.345  000.345: require('utils')
+028.808  000.008  000.008: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+039.950  008.850  008.850: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+041.853  000.244  000.244: require('lsp_utils')
+041.902  001.517  001.273: require('plugins')
+042.127  000.221  000.221: require('lazy')
+042.169  000.014  000.014: require('ffi')
+042.667  000.279  000.279: require('vim.fs')
+042.886  000.211  000.211: require('vim.uri')
+043.038  000.865  000.375: require('vim.loader')
+043.429  000.330  000.330: require('lazy.stats')
+043.762  000.163  000.163: require('lazy.core.util')
+043.983  000.215  000.215: require('lazy.core.config')
+044.275  000.134  000.134: require('lazy.core.handler')
+044.771  000.156  000.156: require('lazy.pkg')
+044.780  000.328  000.172: require('lazy.core.meta')
+044.787  000.507  000.180: require('lazy.core.plugin')
+044.795  000.808  000.166: require('lazy.core.loader')
+045.176  000.157  000.157: require('lazy.core.fragments')
+046.733  000.194  000.194: require('lazy.core.handler.event')
+046.739  000.377  000.183: require('lazy.core.handler.ft')
+046.873  000.129  000.129: require('lazy.core.handler.cmd')
+046.986  000.108  000.108: require('lazy.core.handler.keys')
+047.090  000.007  000.007: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.123  000.002  000.002: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.174  000.002  000.002: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.200  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.231  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.250  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.396  000.002  000.002: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.422  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.550  000.002  000.002: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+047.572  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+048.227  000.287  000.287: sourcing nvim_exec2() called at C:\Program Files\Neovim\share/nvim/runtime/filetype.lua:0
+048.234  000.475  000.188: sourcing C:\Program Files\Neovim\share/nvim/runtime/filetype.lua
+048.247  000.597  000.122: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+049.669  001.403  001.403: require('vim.filetype')
+049.717  000.007  000.007: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+050.830  000.686  000.686: require('cmp.utils.api')
+051.163  000.156  000.156: require('cmp.types.cmp')
+051.477  000.168  000.168: require('cmp.utils.misc')
+051.513  000.343  000.175: require('cmp.types.lsp')
+051.655  000.139  000.139: require('cmp.types.vim')
+051.659  000.823  000.185: require('cmp.types')
+051.815  000.153  000.153: require('cmp.utils.highlight')
+052.097  000.114  000.114: require('cmp.utils.debug')
+052.109  000.289  000.174: require('cmp.utils.autocmd')
+052.444  000.009  000.009: sourcing nvim_exec2() called at C:/Users/michael.trittin/AppData/Local/nvim/plugins/hrsh7th/nvim-cmp/plugin/cmp.lua:0
+052.451  002.477  000.517: sourcing C:/Users/michael.trittin/AppData/Local/nvim/plugins/hrsh7th/nvim-cmp/plugin/cmp.lua
+052.472  002.627  000.151: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+052.481  000.003  000.003: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+052.517  000.001  000.001: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+053.728  000.155  000.155: require('cmp.utils.char')
+053.738  000.580  000.425: require('cmp.utils.str')
+054.204  000.106  000.106: require('cmp.utils.buffer')
+054.220  000.275  000.169: require('cmp.utils.keymap')
+054.224  000.483  000.208: require('cmp.utils.feedkeys')
+054.574  000.103  000.103: require('cmp.config.mapping')
+054.693  000.114  000.114: require('cmp.utils.cache')
+054.919  000.098  000.098: require('cmp.config.compare')
+055.097  000.172  000.172: require('cmp.config.window')
+055.103  000.404  000.134: require('cmp.config.default')
+055.128  000.788  000.167: require('cmp.config')
+055.150  000.924  000.136: require('cmp.utils.async')
+055.391  000.095  000.095: require('cmp.utils.pattern')
+055.398  000.245  000.150: require('cmp.context')
+055.831  000.148  000.148: require('cmp.utils.snippet')
+056.159  000.322  000.322: require('cmp.matcher')
+057.339  001.818  001.349: require('cmp.entry')
+057.352  001.952  000.134: require('cmp.source')
+057.733  000.216  000.216: require('cmp.utils.event')
+058.238  000.152  000.152: require('cmp.utils.options')
+058.249  000.340  000.188: require('cmp.utils.window')
+058.253  000.513  000.173: require('cmp.view.docs_view')
+058.419  000.163  000.163: require('cmp.view.custom_entries_view')
+058.553  000.130  000.130: require('cmp.view.wildmenu_entries_view')
+058.687  000.130  000.130: require('cmp.view.native_entries_view')
+058.878  000.186  000.186: require('cmp.view.ghost_text_view')
+058.893  001.538  000.199: require('cmp.view')
+059.224  006.467  000.745: require('cmp.core')
+059.573  000.183  000.183: require('cmp.config.sources')
+059.622  007.077  000.426: require('cmp')
+060.556  000.164  000.164: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/editorconfig.lua
+060.575  000.292  000.128: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+060.846  000.181  000.181: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/gzip.vim
+060.858  000.274  000.093: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+061.074  000.129  000.129: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/man.lua
+061.089  000.221  000.092: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+062.111  000.228  000.228: sourcing C:\Program Files\Neovim\share\nvim\runtime\pack\dist\opt\matchit\plugin\matchit.vim
+062.198  001.024  000.796: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/matchit.vim
+062.209  001.112  000.088: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+062.457  000.149  000.149: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/matchparen.vim
+062.469  000.248  000.099: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+062.590  000.025  000.025: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/netrwPlugin.vim
+062.673  000.194  000.169: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+062.944  000.186  000.186: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/osc52.lua
+062.966  000.285  000.100: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+063.408  000.281  000.281: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/rplugin.vim
+063.422  000.447  000.166: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+063.577  000.065  000.065: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/shada.vim
+063.588  000.157  000.091: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+063.738  000.035  000.035: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/spellfile.vim
+063.747  000.152  000.117: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+063.907  000.079  000.079: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/tarPlugin.vim
+063.916  000.162  000.083: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+064.145  000.148  000.148: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/tohtml.lua
+064.161  000.238  000.090: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+064.313  000.042  000.042: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/tutor.vim
+064.323  000.137  000.095: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+064.546  000.125  000.125: sourcing C:\Program Files\Neovim\share/nvim/runtime/plugin/zipPlugin.vim
+064.558  000.216  000.091: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+066.889  000.738  000.738: sourcing C:\Program Files\Neovim\share/nvim/runtime/colors/vim.lua
+067.262  001.224  000.485: sourcing C:\Program Files\Neovim\share\nvim\runtime\colors\habamax.vim
+067.465  002.695  001.471: sourcing nvim_exec2() called at C:\Users\michael.trittin\AppData\Local\nvim\init.lua:0
+068.185  000.278  000.278: require('vim.lsp.log')
+069.019  000.827  000.827: require('vim.lsp.protocol')
+069.385  000.359  000.359: require('vim.lsp.util')
+069.742  000.150  000.150: require('vim.lsp.sync')
+069.755  000.362  000.211: require('vim.lsp._changetracking')
+070.645  000.729  000.729: require('vim.lsp._transport')
+070.738  000.979  000.250: require('vim.lsp.rpc')
+070.903  003.298  000.493: require('vim.lsp')
+073.012  001.796  001.796: require('vim.F')
+073.097  002.190  000.395: require('vim.lsp.buf')
+074.199  000.849  000.849: require('vim.diagnostic')
+074.664  047.506  008.496: sourcing C:\Users\michael.trittin\AppData\Local\nvim\init.lua
+074.769  000.981: sourcing vimrc file(s)
+075.413  000.290  000.290: sourcing C:\Program Files\Neovim\share\nvim\runtime\filetype.lua
+076.885  000.205  000.205: sourcing C:\Program Files\Neovim\share\nvim\runtime\syntax\synload.vim
+077.123  000.940  000.735: sourcing C:\Program Files\Neovim\share/nvim/runtime/syntax/syntax.vim
+077.161  001.162: inits 3
+079.819  002.658: reading ShaDa
+079.977  000.158: opening buffers
+079.997  000.019: BufEnter autocommands
+080.001  000.004: editing files in windows
+080.034  000.033: VimEnter autocommands
+080.485  000.180  000.180: require('vim.termcap')
+080.591  000.088  000.088: require('vim.text')
+080.828  000.525: UIEnter autocommands
+092.693  010.101  010.101: sourcing C:\Program Files\Neovim\share\nvim\runtime\autoload\provider\clipboard.vim
+092.730  001.801: before starting main loop
+093.245  000.515: first screen update
+093.248  000.004: --- NVIM STARTED ---
+
