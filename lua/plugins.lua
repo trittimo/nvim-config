@@ -396,9 +396,21 @@ return {
                 ["<Tab>"] = { "accept", "fallback" }
             },
             sources = {
-                default = { "lsp", "path", "snippets", "buffer" }
+                default = { "lsp", "path", "snippets", "buffer" },
+                per_filetype = {
+                    sql = { "snippets", "dadbod", "buffer" }
+                },
+                providers = {
+                    dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" }
+                }
             },
-            fuzzy = { implementation = "rust" }
+            fuzzy = {
+                implementation = "rust",
+                prebuilt_binaries = {
+                    download = false,
+                    ignore_version_mismatch = true,
+                }
+            }
         }
     },
     {
