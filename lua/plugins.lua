@@ -26,6 +26,7 @@ local lsp_filetypes = {
 local treesitter_filetypes = {}
 for _,v in pairs(treesitter_languages) do table.insert(treesitter_filetypes, v) end
 
+--@type LazySpec
 return {
     {
         "trittimo/file-gui",
@@ -380,9 +381,8 @@ return {
     {
         "saghen/blink.cmp",
         dir = plugin_path("saghen/blink.cmp"),
-        build = "cargo build --release",
         dev = true,
-        opts_extend = { "sources.default" },
+        -- @type blink.cmp.Config
         opts = {
             keymap = {
                 preset = "none",
@@ -432,6 +432,7 @@ return {
         "junegunn/fzf.vim",
         lazy = true,
         dir = plugin_path("junegunn/fzf.vim"),
+        dependencies = { "junegunn/fzf" },
         dev = true,
         cmd = { "Files", "Fzf", "Rg", "Buffers" },
         init = function()
