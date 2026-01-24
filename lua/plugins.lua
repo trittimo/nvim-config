@@ -48,16 +48,13 @@ return {
                 -- :help nvim-tree-api
                 local api = require("nvim-tree.api")
                 local function delete_file()
-                    api.fs.trash(api.tree.get_node_under_cursor())
+                    api.fs.remove(api.tree.get_node_under_cursor())
                 end
                 api.config.mappings.default_on_attach(bufnr)
                 vim.keymap.set("n", "<C-k>", "3k", {buffer = bufnr, noremap = true, silent = true, nowait = true})
                 vim.keymap.set("n", "<C-j>", "3j", {buffer = bufnr, noremap = true, silent = true, nowait = true})
                 vim.keymap.set("n", "<C-d>", delete_file, {buffer = bufnr, noremap = true, silent = true, nowait = true})
             end,
-            trash = {
-                cmd = utils.is_windows and "Remove-Item -Recurse" or "rm -rf"
-            }
         },
         cmd = {
             "NvimTreeFindFileToggle",
