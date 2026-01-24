@@ -691,6 +691,30 @@ elseif is_windows or is_linux then
 end
 
 -- ============= COMMANDS =============
+-- A command to open a file for editing in whatever is the 'main' window, which we define as the largest window
+vim.api.nvim_create_user_command("EditMain",
+    function(opts)
+        if not opts.args or #opts.args == 0 then return false end
+        local largest_win_size = 0
+        local largest_win = -1
+        for _, winid in pairs(vim.api.nvim_list_wins()) do
+            if vim.api.nvim_win_get_tabpage(winid) == 1 then -- Only interested in editing files in first tab
+                local size = vim.api.nvim_win_get_height(winid) * vim.api.nvim_win_get_width(winid)
+                if size > largest_win_size then
+                    largest_win_size = size
+                    largest_win = winid
+                end
+            end
+        end
+        if largest_win_size == 0 then return false end -- Implies there were no windows which... shouldn't be possible in a tui session?
+        vim.api.nvim_set_current_win(largest_win)
+        vim.cmd("edit " .. vim.fn.expand(opts.args))
+    end,
+    {
+        nargs = 1,
+        complete = "file"
+    })
+
 vim.api.nvim_create_user_command("Cd",
     function(opts)
         local navpath = vim.fn.expand(opts.args)
