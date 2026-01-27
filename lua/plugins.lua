@@ -1,5 +1,5 @@
 local plugin_path = function(p) return vim.fn.stdpath("config") .. "/plugins/" .. p end
-local utils = require("utils")("plugins.log")
+local utils = require("utils")
 local lsp_utils = require("lsp_utils")
 
 -- https://github.com/nvim-treesitter/nvim-treesitter/blob/main/SUPPORTED_LANGUAGES.md
@@ -54,6 +54,27 @@ return {
                 vim.keymap.set("n", "<C-k>", "3k", {buffer = bufnr, noremap = true, silent = true, nowait = true})
                 vim.keymap.set("n", "<C-j>", "3j", {buffer = bufnr, noremap = true, silent = true, nowait = true})
                 vim.keymap.set("n", "<C-d>", delete_file, {buffer = bufnr, noremap = true, silent = true, nowait = true})
+
+
+                local vim_tree_settings = {
+                    -- No need for a restore. The start function will restore it
+                    start = function()
+                        vim.cmd("NvimTreeFindFileToggle")
+                    end,
+                    close = function()
+                        vim.cmd("NvimTreeFindFileToggle")
+                    end,
+                }
+
+
+                if is_mac then
+                    vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(vim_tree_settings) end)
+                    vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
+                elseif is_windows or is_linux then
+                    vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(vim_tree_settings) end)
+                    vim.keymap.set({"n", "i", "v", "t"}, "<C-S-e>", function() toggle_buffer(vim_tree_settings) end) -- Workaround for neovide. C-M-e is my preferred keybind.
+                    vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
+                end
             end,
         },
         cmd = {

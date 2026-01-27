@@ -8,8 +8,8 @@ M.is_windows = M.sysname == "Windows_NT"
 M.is_linux = M.sysname == "Linux"
 M.is_mac = M.sysname == "Darwin"
 
-function M.log(self, msg, vars)
-    local log_path = vim.fn.stdpath("log") .. "/" .. self.log_path
+function M:log(msg, vars, log_path)
+    log_path = vim.fn.stdpath("log") .. "/" .. (log_path or self.log_path)
     msg = self:interpolate(msg or "", vars or self)
     local f = io.open(log_path, "a")
     if f then
@@ -18,7 +18,7 @@ function M.log(self, msg, vars)
     end
 end
 
-function M.trace_enter(self)
+function M:trace_enter()
     if not self.trace_enabled then return end
     -- Level 2 is the function that called :enter()
     local info = debug.getinfo(2, "nSl")
@@ -51,7 +51,7 @@ function M.trace_enter(self)
     })
 end
 
-function M.trace_exit(self)
+function M:trace_exit()
     if not self.trace_enabled then return end
     local info = debug.getinfo(2, "nSl")
     local fn_name = info.name or "unknown_func"
@@ -66,7 +66,7 @@ function M.trace_exit(self)
 end
 
 -- Usage:  M:interpolate("Hello $(name)", {name = 'Mike'})
-function M.interpolate(self, str, vars)
+function M:interpolate(str, vars)
     return (str:gsub("%$%(([%w_]+)%)", function(key)
         return tostring(vars[key] or ("$(" .. key .. ")"))
     end))
@@ -74,7 +74,7 @@ end
 
 -- Note: don't modify the result and expect the base tables to change
 -- If there are key collisions, the first table passed will take priority
-function M.join_tables(self, ...)
+function M:join_tables(...)
     local args = {...}
     local result = {}
     local indexer = function(table, key)
@@ -86,7 +86,7 @@ function M.join_tables(self, ...)
     return result
 end
 
-function M.system(self, ...)
+function M:system(...)
     self:trace_enter()
     local args = { ... }
     self:log("system($(args))", {args = vim.inspect(args)})
@@ -100,7 +100,7 @@ function M.system(self, ...)
     return true
 end
 
-function M.system_stdout(self, ...)
+function M:system_stdout(...)
     self:trace_enter()
     local args = { ... }
     local result = vim.system(args):wait()
@@ -112,32 +112,32 @@ function M.system_stdout(self, ...)
     return result.stdout
 end
 
-function M.relpath(self, ...)
+function M:relpath(...)
     return vim.fs.joinpath(vim.fn.stdpath("data"), "lsps", unpack({ ... }))
 end
 
-function M.directory_exists(self, path)
+function M:directory_exists(path)
 ---@diagnostic disable-next-line: undefined-field
     local result = vim.uv.fs_stat(path)
     return result ~= nil and result.type == "directory"
 end
 
-function M.file_exists(self, path)
+function M:file_exists(path)
 ---@diagnostic disable-next-line: undefined-field
     return vim.uv.fs_stat(path) ~= nil
 end
 
-function M.delete_file(self, path)
+function M:delete_file(path)
     vim.fs.rm(path, {recursive = true, force = true})
     return true
 end
 
-function M.ensure_dir_exists(self, path)
+function M:ensure_dir_exists(path)
     local expanded = vim.fs.dirname(vim.fn.expand(path))
     vim.fn.mkdir(expanded, "p")
 end
 
-function M.read_entire_file(self, path)
+function M:read_entire_file(path)
     local stat = vim.uv.fs_stat(path)
     if stat == nil or stat.type ~= "file" then return end
     local f = io.open(path, "r")
@@ -147,7 +147,7 @@ function M.read_entire_file(self, path)
     return result
 end
 
-function M.write_as_mpack(self, path, content)
+function M:write_as_mpack(path, content)
     local f = io.open(path, "w")
     if not f then return nil end
     content = vim.mpack.encode(content)
@@ -155,13 +155,13 @@ function M.write_as_mpack(self, path, content)
     f:close()
 end
 
-function M.read_mpack_file(self, path)
+function M:read_mpack_file(path)
     local content = self:read_entire_file(path)
     if not content then return nil end
     return vim.mpack.decode(content)
 end
 
-function M.write_as_json(self, path, content)
+function M:write_as_json(path, content)
     local f = io.open(path, "w")
     if not f then return nil end
     content = vim.json.encode(content)
@@ -169,13 +169,13 @@ function M.write_as_json(self, path, content)
     f:close()
 end
 
-function M.read_json_file(self, path)
+function M:read_json_file(path)
     local content = self:read_entire_file(path)
     if not content then return nil end
     return vim.json.decode(content, {object=true,array=true})
 end
 
-function M.download(self, url, destination)
+function M:download(url, destination)
     assert(self._download, "Missing _download implementation")
     self:trace_enter()
     destination = self:relpath(destination)
@@ -185,7 +185,7 @@ function M.download(self, url, destination)
     return self:_download(url, destination)
 end
 
-function M.unzip(self, file, destination)
+function M:unzip(file, destination)
     assert(self._unzip, "Missing _unzip implementation")
     self:trace_enter()
     local src = self:relpath(file)
@@ -197,17 +197,49 @@ function M.unzip(self, file, destination)
     return result
 end
 
-function M.http_get(self, url)
+function M:http_get(url)
     return self:_http_get(url)
 end
 
-function M.http_get_json(self, url)
+function M:http_get_json(url)
     local response = self:http_get(url)
     if not response then return nil end
     return vim.json.decode(
         response,
         { object = true, array = true }
     )
+end
+
+function M:toggle_buffer(settings)
+    if settings.win and -- We have saved a window
+        vim.api.nvim_win_is_valid(settings.win) -- It's still valid
+    then
+        local current_buf = vim.api.nvim_get_current_buf()
+        local current_win = vim.api.nvim_get_current_win()
+        if current_buf == settings.buf and current_win == settings.win then
+            if settings.close then return settings.close() end
+            vim.api.nvim_win_close(settings.win, true)
+        else -- Not active
+            vim.api.nvim_set_current_win(settings.win) -- Activate it
+        end
+        return
+    end
+
+    vim.api.nvim_create_autocmd("BufEnter", {
+        once = true,
+        callback = function()
+            settings.win = vim.api.nvim_get_current_win()
+            settings.buf = vim.api.nvim_get_current_buf()
+        end
+    })
+
+    if settings.buf and vim.api.nvim_buf_is_valid(settings.buf) and settings.restore then
+        -- We found a buffer to restore and we have a restore fn, call it
+        settings.restore(settings.buf)
+    else
+        -- No way to restore, just start
+        settings.start()
+    end
 end
 
 -- OS Specific implementations
@@ -256,8 +288,4 @@ if M.is_linux or M.is_mac then
     end
 end
 
-return function(log_path)
-    local result = {log_path = log_path}
-    setmetatable(result, {__index = M})
-    return result
-end
+return M

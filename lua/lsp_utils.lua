@@ -1,4 +1,4 @@
-local utils = require("utils")("lsp_utils.log")
+local utils = require("utils")
 
 local M = {}
 M.setup = function(self)

@@ -10,41 +10,10 @@ local is_native = not is_embedded
 local saved_sessions_path = vim.fn.stdpath("state") .. "/sessions.mpack"
 local max_saved_sessions = 10
 local max_whitespace_highlight_filesize = 1024 * 1024 -- 1MB
-local utils = require("utils")("init.log")
+local utils = require("utils")
 local match_ids = {} -- window-local match IDs
 
 -- ============= HELPER FUNCTIONS =============
-local function toggle_buffer(settings)
-    if settings.win and -- We have saved a window
-        vim.api.nvim_win_is_valid(settings.win) -- It's still valid
-    then
-        local current_buf = vim.api.nvim_get_current_buf()
-        local current_win = vim.api.nvim_get_current_win()
-        if current_buf == settings.buf and current_win == settings.win then
-            if settings.close then return settings.close() end
-            vim.api.nvim_win_close(settings.win, true)
-        else -- Not active
-            vim.api.nvim_set_current_win(settings.win) -- Activate it
-        end
-        return
-    end
-
-    vim.api.nvim_create_autocmd("BufEnter", {
-        once = true,
-        callback = function()
-            settings.win = vim.api.nvim_get_current_win()
-            settings.buf = vim.api.nvim_get_current_buf()
-        end
-    })
-
-    if settings.buf and vim.api.nvim_buf_is_valid(settings.buf) and settings.restore then
-        -- We found a buffer to restore and we have a restore fn, call it
-        settings.restore(settings.buf)
-    else
-        -- No way to restore, just start
-        settings.start()
-    end
-end
 
 local function should_skip(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -549,18 +518,7 @@ if is_native then
             vim.cmd("startinsert")
         end
     }
-
-    local vim_tree_settings = {
-        -- No need for a restore. The start function will restore it
-        start = function()
-            vim.cmd("NvimTreeFindFileToggle")
-        end,
-        close = function()
-            vim.cmd("NvimTreeFindFileToggle")
-        end,
-    }
-
-    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
+    vim.keymap.set({"n", "i", "v", "t"}, "<C-`>", function() utils:toggle_buffer(term_toggle_settings) end, { desc = "Toggle terminal split" })
 
     -- Autocommands for man pages
     vim.api.nvim_create_autocmd("FileType", {
@@ -618,14 +576,6 @@ if is_native then
     --     end,
     -- })
 
-    if is_mac then
-        vim.keymap.set({"n", "i", "v", "t"}, "<D-C-e>", function() toggle_buffer(vim_tree_settings) end)
-        vim.keymap.set("n", "<D-t>", "<cmd>:tabe<CR>")
-    elseif is_windows or is_linux then
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-M-e>", function() toggle_buffer(vim_tree_settings) end)
-        vim.keymap.set({"n", "i", "v", "t"}, "<C-S-e>", function() toggle_buffer(vim_tree_settings) end) -- Workaround for neovide. C-M-e is my preferred keybind.
-        vim.keymap.set("n", "<C-S-t>", "<cmd>:tabe<CR>")
-    end
 end
 
 if is_mac then
