@@ -68,30 +68,13 @@ return {
         }
     },
     {
-        "tpope/vim-dadbod",
-        lazy = true,
-        dir = plugin_path("tpope/vim-dadbod"),
-        dev = true,
-        opts = {
-        }
-    },
-    {
-        "kristijanhusak/vim-dadbod-completion",
-        lazy = true,
-        dir = plugin_path("kristijanhusak/vim-dadbod-completion"),
-        dev = true,
-        ft = { "sql", "mysql", "plsql" },
-        opts = {
-        }
-    },
-    {
         "kristijanhusak/vim-dadbod-ui",
         lazy = true,
         dir = plugin_path("kristijanhusak/vim-dadbod-ui"),
         dev = true,
         dependencies = {
-            { "tpope/vim-dadbod" },
-            { "kristijanhusak/vim-dadbod-completion" },
+            { "tpope/vim-dadbod", lazy = true, dir = plugin_path("tpope/vim-dadbod"), dev = true },
+            { "kristijanhusak/vim-dadbod-completion", lazy = true, dir = plugin_path("kristijanhusak/vim-dadbod-completion"), dev = true, ft = { "sql", "mysql", "plsql" } },
         },
         ft = { "sql", "mysql", "plsql" },
         cmd = {
